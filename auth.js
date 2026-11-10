@@ -250,23 +250,35 @@ document.addEventListener("click",async event=>{
       }
     };
 
-    // Check the active entitlement first. Most returning students can open
-    // premium immediately without waiting for a payment-recovery API call.
+    // Show the access dialog immediately so a slow network check never
+    // leaves the student wondering whether the button worked.
+    const accessDialog=ensurePaymentDialog();
+    $("paymentSelectionText").textContent=selection.course_name+" · "+selection.module_name+". Choose module-only access or unlock every module in this course.";
+    paymentNotice("Checking your existing premium access…");
+    $("buyModuleAccess").disabled=true;
+    $("buyCourseAccess").disabled=true;
+    if(!accessDialog.open)accessDialog.showModal();
+
+    // Check active entitlement, then attempt recovery only when necessary.
     if(await hasPremiumAccess(selection)){
+      if(accessDialog.open)accessDialog.close();
       openPremiumTarget();
       return;
     }
 
-    // Only query Razorpay when no active entitlement exists. This keeps the
-    // recovery path for earlier successful payments without slowing normal use.
     const {data:recovery,error:recoveryError}=await supabase.functions.invoke("verify-razorpay-payment",{body:{action:"recover_pending"}});
     if(recoveryError)console.warn("Could not recover pending premium purchases:",recoveryError.message);
     else if(recovery?.recovered>0)console.info(recovery.message);
 
     if(await hasPremiumAccess(selection)){
+      if(accessDialog.open)accessDialog.close();
       openPremiumTarget();
       return;
     }
+
+    paymentNotice("Premium access is required to continue.");
+    $("buyModuleAccess").disabled=false;
+    $("buyCourseAccess").disabled=false;
     window.__pendingPremiumAction=target;const d=ensurePaymentDialog();
     $("paymentSelectionText").textContent=selection.course_name+" · "+selection.module_name+". Choose module-only access or unlock every module in this course.";
     paymentNotice("Premium access is required to continue.");if(!d.open)d.showModal();
