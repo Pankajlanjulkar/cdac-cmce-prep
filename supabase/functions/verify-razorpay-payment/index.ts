@@ -55,17 +55,46 @@ Deno.serve(async (req) => {
     const paymentResponse = await fetch("https://api.razorpay.com/v1/payments/" + encodeURIComponent(razorpay_payment_id), {
       headers: { "Authorization": "Basic " + btoa(razorpayKeyId + ":" + razorpaySecret) },
     });
-    const payment = await paymentResponse.json();
-    if (!paymentResponse.ok || payment.order_id !== razorpay_order_id || payment.status !== "captured" ||
+    let payment = await paymentResponse.json();
+    if (!paymentResponse.ok || payment.order_id !== razorpay_order_id ||
         payment.amount !== purchase.amount_inr * 100 || payment.currency !== "INR") {
-      return json({ error: "Payment is not captured or does not match this order. Access has not been granted." }, 400);
+      return json({ error: "Payment details do not match this order. Access has not been granted." }, 400);
     }
 
-    const { error: updateError } = await serviceClient.from("student_purchases").update({
+    // Some Razorpay accounts leave successful payments in "authorized" until
+    // capture. Capture only after signature, order, amount and currency checks.
+    if (payment.status === "authorized") {
+      const captureResponse = await fetch("https://api.razorpay.com/v1/payments/" +
+        encodeURIComponent(razorpay_payment_id) + "/capture", {
+          method: "POST",
+          headers: {
+            "Authorization": "Basic " + btoa(razorpayKeyId + ":" + razorpaySecret),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ amount: purchase.amount_inr * 100, currency: "INR" }),
+        });
+      payment = await captureResponse.json();
+      if (!captureResponse.ok) {
+        return json({ error: payment.error?.description || "Payment was authorized but could not be captured. Please contact support before retrying." }, 502);
+      }
+    }
+
+    if (payment.status !== "captured") {
+      return json({ error: "Payment is not captured (current status: " + String(payment.status || "unknown") + "). Access has not been granted." }, 400);
+    }
+
+    const { data: activated, error: updateError } = await serviceClient.from("student_purchases").update({
       status: "active", provider_payment_id: razorpay_payment_id,
-    }).eq("id", purchase.id).eq("student_id", user.id).eq("status", "pending");
-    if (updateError) return json({ error: "Payment verified, but access activation failed. Please contact support." }, 500);
-    return json({ success: true, message: "Payment verified. Premium access is active." });
+    }).eq("id", purchase.id).eq("student_id", user.id).eq("status", "pending").select("id").maybeSingle();
+    if (updateError) return json({ error: "Payment captured, but access activation failed: " + updateError.message }, 500);
+    if (!activated) {
+      const { data: refreshed, error: refreshError } = await serviceClient.from("student_purchases")
+        .select("status").eq("id", purchase.id).eq("student_id", user.id).maybeSingle();
+      if (refreshError || refreshed?.status !== "active") {
+        return json({ error: "Payment captured, but the premium access record was not activated. Please contact support with your order ID." }, 500);
+      }
+    }
+    return json({ success: true, message: "Payment verified and captured. Premium access is active." });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Unexpected verification error." }, 500);
   }
