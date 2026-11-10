@@ -176,7 +176,7 @@ function ensurePaymentDialog(){
 function paymentNotice(message,error=false){const n=$("paymentNotice");if(!n)return;const box=document.createElement("div");box.className="auth-message"+(error?" error":"");box.textContent=message;n.replaceChildren(box);}
 async function hasPremiumAccess(selection){
   const {data,error}=await supabase.from("student_purchases").select("id,access_type,module_index").eq("student_id",currentSession.user.id).eq("course_code",selection.course_code).eq("status","active");
-  if(error)throw error;return (data||[]).some(p=>p.access_type==="course"||(p.access_type==="module"&&p.module_index===selection.module_index));
+  if(error)throw error;return (data||[]).some(p=>p.access_type==="course"||(p.access_type==="module"&&Number(p.module_index)===Number(selection.module_index)));
 }
 function suspendCourseDialogForCheckout(){
   const d=$("courseDialog");
