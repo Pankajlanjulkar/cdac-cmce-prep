@@ -261,7 +261,7 @@ const dbPlatformTestQs=[
 {q:"Which CAP theorem trade-off is relevant when a network partition occurs in a distributed data store?",o:["Consistency versus availability","Atomicity versus durability","Normalization versus indexing","Latency versus schema"],a:0,e:"During a partition, a distributed system must choose between returning consistent responses and remaining available on both sides.",level:"Hard"},
 {q:"What is a key benefit of database partitioning?",o:["Divide a large table into manageable pieces and potentially improve pruning and maintenance","Guarantee every query is O(1)","Eliminate the need for backups","Automatically normalize every relation"],a:0,e:"Partitioning can improve manageability and allow queries to scan only relevant partitions when predicates align with the partition key.",level:"Hard"},
 {q:"Which statement best describes a phantom read under serializable isolation?",o:["The DBMS prevents concurrent changes from violating serializable behavior, possibly using range or predicate protection","It is always allowed","It is the same as a dirty read","It occurs only in read-only transactions"],a:0,e:"Serializable isolation prevents executions that would produce non-serializable predicate results; implementation may use range locks or serialization checks.",level:"Hard"}
-];
+].slice(0,60);
 
 const dbQs=[
 {q:"Which key uniquely identifies each row in a relational table and does not allow NULL values?",o:["Foreign key","Primary key","Alternate key","Composite attribute"],a:1,e:"A primary key uniquely identifies each row. Its values must be unique and cannot be NULL."},
