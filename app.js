@@ -935,42 +935,46 @@ function normalizePremiumMockQuestion(raw){
 if(Array.isArray(raw))return {q:raw[0]??"",o:Array.isArray(raw[1])?raw[1]:[],a:Number(raw[2]),e:raw[3]??""};
 return {q:raw?.q??raw?.question??"",o:raw?.o??raw?.options??[],a:Number(raw?.a??raw?.answerIndex),e:raw?.e??raw?.explanation??""};
 }
-let premiumMockQs=[],premiumMockIndex=0,premiumMockAnswers={},premiumMockSubmitted=false;
+let premiumMockQs=[],premiumMockIndex=0,premiumMockAnswers={},premiumMockSubmitted=false,premiumMockTimer=null,premiumMockDeadline=0,premiumMockSeconds=3600;
+function takeRotated(bank,start,count){return Array.from({length:count},(_,i)=>bank[(start+i)%bank.length]);}
 function startPremiumMock(){
+if(premiumMockTimer){clearInterval(premiumMockTimer);premiumMockTimer=null;}
 const banks=getPremiumBanksForSelectedModule();
 if(!banks||banks.some(bank=>!Array.isArray(bank)||bank.length!==100)){alert("All three 100-question difficulty banks must be ready before mock tests can start.");return;}
 const testIndex=Number(document.getElementById("premiumMockSelect").value);
-premiumMockQs=[...banks[0].slice(testIndex*10,testIndex*10+10),...banks[1].slice(testIndex*10,testIndex*10+10),...banks[2].slice(testIndex*10,testIndex*10+10)].map(normalizePremiumMockQuestion);
-if(premiumMockQs.length!==30||premiumMockQs.some(q=>!q.q||q.o.length!==4||!Number.isInteger(q.a)||q.a<0||q.a>3)){alert("This mock test contains invalid question data and cannot be started.");return;}
-premiumMockIndex=0;premiumMockAnswers={};premiumMockSubmitted=false;
-document.getElementById("premiumMockPanel").hidden=false;document.getElementById("premiumMockResult").hidden=true;renderPremiumMock();
+premiumMockQs=[...takeRotated(banks[0],testIndex*9,14),...takeRotated(banks[1],testIndex*9,13),...takeRotated(banks[2],testIndex*9,13)].map(normalizePremiumMockQuestion);
+if(premiumMockQs.length!==40||premiumMockQs.some(q=>!q.q||q.o.length!==4||!Number.isInteger(q.a)||q.a<0||q.a>3)){alert("This mock test contains invalid question data and cannot be started.");return;}
+premiumMockIndex=0;premiumMockAnswers={};premiumMockSubmitted=false;premiumMockSeconds=3600;premiumMockDeadline=Date.now()+3600000;
+document.getElementById("premiumMockPanel").hidden=false;document.getElementById("premiumMockResult").hidden=true;renderPremiumMock();updatePremiumMockTimer();
+premiumMockTimer=setInterval(()=>{premiumMockSeconds=Math.max(0,Math.ceil((premiumMockDeadline-Date.now())/1000));updatePremiumMockTimer();if(premiumMockSeconds<=0)submitPremiumMock(true);},1000);
 }
+function updatePremiumMockTimer(){const el=document.getElementById("premiumMockTimer");if(!el)return;const m=String(Math.floor(premiumMockSeconds/60)).padStart(2,"0"),s=String(premiumMockSeconds%60).padStart(2,"0");el.textContent=m+":"+s;el.style.color=premiumMockSeconds<=300?"#b42318":"#176b45";}
 function renderPremiumMock(){
 const q=premiumMockQs[premiumMockIndex];
-document.getElementById("premiumMockProgress").textContent="Question "+(premiumMockIndex+1)+" of 30";
+document.getElementById("premiumMockProgress").textContent="Question "+(premiumMockIndex+1)+" of 40";
 document.getElementById("premiumMockTitle").textContent="Premium Mock Test "+(Number(document.getElementById("premiumMockSelect").value)+1);
 document.getElementById("premiumMockQuestion").textContent=q.q;
 const box=document.getElementById("premiumMockOptions");box.replaceChildren();
 q.o.forEach((v,i)=>{const b=document.createElement("button");b.type="button";b.className="quiz-option"+(premiumMockAnswers[premiumMockIndex]===i?" selected":"");b.textContent=String.fromCharCode(65+i)+". "+v;b.disabled=premiumMockSubmitted;b.addEventListener("click",()=>{premiumMockAnswers[premiumMockIndex]=i;renderPremiumMock()});box.appendChild(b)});
 document.getElementById("premiumMockPrev").disabled=premiumMockIndex===0||premiumMockSubmitted;
 document.getElementById("premiumMockNext").disabled=premiumMockSubmitted;
-document.getElementById("premiumMockNext").textContent=premiumMockIndex===29?"Last question":"Next question";
+document.getElementById("premiumMockNext").textContent=premiumMockIndex===39?"Last question":"Next question";
 document.getElementById("submitPremiumMock").hidden=premiumMockSubmitted;
 }
-function submitPremiumMock(){
+function submitPremiumMock(autoSubmit=false){
 if(premiumMockSubmitted)return;
-premiumMockSubmitted=true;
+premiumMockSubmitted=true;if(premiumMockTimer){clearInterval(premiumMockTimer);premiumMockTimer=null;}
 const score=premiumMockQs.reduce((n,q,i)=>n+(premiumMockAnswers[i]===q.a?1:0),0);
-document.getElementById("premiumMockScore").textContent=score+" / 30";
-document.getElementById("premiumMockSummary").textContent="Answered "+Object.keys(premiumMockAnswers).length+" of 30 questions. "+(30-Object.keys(premiumMockAnswers).length)+" unanswered.";
+document.getElementById("premiumMockScore").textContent=score+" / 40";
+document.getElementById("premiumMockSummary").textContent=(autoSubmit?"Time expired. ":"Test submitted. ")+"Answered "+Object.keys(premiumMockAnswers).length+" of 40 questions. "+(40-Object.keys(premiumMockAnswers).length)+" unanswered.";
 const review=document.getElementById("premiumMockReview");review.replaceChildren();
 premiumMockQs.forEach((q,i)=>{const d=document.createElement("div");d.className="review-item";const h=document.createElement("strong");h.textContent=(i+1)+". "+q.q;const p=document.createElement("p");p.textContent="Your answer: "+(premiumMockAnswers[i]===undefined?"Not answered":String.fromCharCode(65+premiumMockAnswers[i])+". "+q.o[premiumMockAnswers[i]])+" · Correct: "+String.fromCharCode(65+q.a)+". "+q.o[q.a];const e=document.createElement("p");e.textContent=q.e;d.append(h,p,e);review.appendChild(d)});
 document.getElementById("premiumMockPanel").hidden=true;document.getElementById("premiumMockResult").hidden=false;
 }
 document.getElementById("startPremiumMock").addEventListener("click",startPremiumMock);
 document.getElementById("premiumMockPrev").addEventListener("click",()=>{if(premiumMockIndex>0&&!premiumMockSubmitted){premiumMockIndex--;renderPremiumMock()}});
-document.getElementById("premiumMockNext").addEventListener("click",()=>{if(premiumMockIndex<29&&!premiumMockSubmitted){premiumMockIndex++;renderPremiumMock()}});
-document.getElementById("submitPremiumMock").addEventListener("click",submitPremiumMock);
+document.getElementById("premiumMockNext").addEventListener("click",()=>{if(premiumMockIndex<39&&!premiumMockSubmitted){premiumMockIndex++;renderPremiumMock()}});
+document.getElementById("submitPremiumMock").addEventListener("click",()=>submitPremiumMock(false));
 document.getElementById("retakePremiumMock").addEventListener("click",startPremiumMock);
 
 document.getElementById("openCppPremium").addEventListener("click",startCppPremium);
