@@ -937,8 +937,28 @@ return {q:raw?.q??raw?.question??"",o:raw?.o??raw?.options??[],a:Number(raw?.a??
 }
 let premiumMockQs=[],premiumMockIndex=0,premiumMockAnswers={},premiumMockMarked={},premiumMockSubmitted=false,premiumMockTimer=null,premiumMockDeadline=0,premiumMockSeconds=3600;
 function takeRotated(bank,start,count){return Array.from({length:count},(_,i)=>bank[(start+i)%bank.length]);}
+function premiumMockAttemptKey(testIndex){
+return "cmce_premium_mock_attempt_v1:"+selectedCourse.code+":"+selectedModuleIndex+":"+testIndex;
+}
+function getSavedPremiumMockAttempt(testIndex){
+try{const raw=localStorage.getItem(premiumMockAttemptKey(testIndex));return raw?JSON.parse(raw):null;}catch(e){return null;}
+}
+function showPremiumMockReview(attempt){
+if(!attempt||!Array.isArray(attempt.questions)||attempt.questions.length!==40)return false;
+premiumMockQs=attempt.questions;premiumMockAnswers=attempt.answers||{};premiumMockMarked=attempt.marked||{};premiumMockSubmitted=true;premiumMockIndex=0;
+document.getElementById("premiumMockTitle").textContent="PREMIUM MOCK TEST "+(Number(attempt.testIndex)+1)+" · SUBMITTED";
+document.getElementById("premiumMockPanel").hidden=true;document.getElementById("premiumMockResult").hidden=false;
+document.getElementById("premiumMockScore").textContent=attempt.score+" / 40";
+document.getElementById("premiumMockSummary").textContent="Submitted on "+new Date(attempt.submittedAt).toLocaleString()+" · "+Object.keys(premiumMockAnswers).length+" answered · "+(40-Object.keys(premiumMockAnswers).length)+" unanswered · "+Math.round(attempt.score/40*100)+"% · Review only — this test cannot be attempted again.";
+const review=document.getElementById("premiumMockReview");review.replaceChildren();
+premiumMockQs.forEach((q,i)=>{const d=document.createElement("div");d.className="review-item";const h=document.createElement("strong");h.textContent="Q"+(i+1)+". "+q.q;const p=document.createElement("p");p.textContent="Your answer: "+(premiumMockAnswers[i]===undefined?"Not answered":String.fromCharCode(65+premiumMockAnswers[i])+". "+q.o[premiumMockAnswers[i]])+" · Correct answer: "+String.fromCharCode(65+q.a)+". "+q.o[q.a];const e=document.createElement("p");e.textContent=q.e;d.append(h,p,e);review.appendChild(d)});
+return true;
+}
 function startPremiumMock(){
 if(premiumMockTimer){clearInterval(premiumMockTimer);premiumMockTimer=null;}
+const testIndex=Number(document.getElementById("premiumMockSelect").value);
+const savedAttempt=getSavedPremiumMockAttempt(testIndex);
+if(savedAttempt){showPremiumMockReview(savedAttempt);return;}
 const banks=getPremiumBanksForSelectedModule();
 if(!banks||banks.some(bank=>!Array.isArray(bank)||bank.length!==100)){alert("All three 100-question difficulty banks must be ready before mock tests can start.");return;}
 const testIndex=Number(document.getElementById("premiumMockSelect").value);
@@ -973,6 +993,9 @@ if(premiumMockSubmitted)return;
 if(!autoSubmit){const unanswered=40-Object.keys(premiumMockAnswers).length;const marked=Object.keys(premiumMockMarked).filter(k=>premiumMockMarked[k]).length;const msg="Submit this premium mock test?\\n\\nAnswered: "+Object.keys(premiumMockAnswers).length+"\\nUnanswered: "+unanswered+"\\nMarked for review: "+marked+"\\n\\nYou cannot change answers after submission.";if(!confirm(msg))return;}
 premiumMockSubmitted=true;if(premiumMockTimer){clearInterval(premiumMockTimer);premiumMockTimer=null;}
 const score=premiumMockQs.reduce((n,q,i)=>n+(premiumMockAnswers[i]===q.a?1:0),0);
+const testIndex=Number(document.getElementById("premiumMockSelect").value);
+const savedAttempt={testIndex,questions:premiumMockQs,answers:premiumMockAnswers,marked:premiumMockMarked,score,submittedAt:new Date().toISOString()};
+try{localStorage.setItem(premiumMockAttemptKey(testIndex),JSON.stringify(savedAttempt));}catch(e){alert("Your browser could not save this submitted attempt. Do not close this page; check browser storage settings.");}
 document.getElementById("premiumMockScore").textContent=score+" / 40";
 document.getElementById("premiumMockSummary").textContent=(autoSubmit?"Time expired. ":"Test submitted. ")+Object.keys(premiumMockAnswers).length+" answered · "+(40-Object.keys(premiumMockAnswers).length)+" unanswered · "+Object.keys(premiumMockMarked).filter(k=>premiumMockMarked[k]).length+" marked for review · "+Math.round(score/40*100)+"%";
 const review=document.getElementById("premiumMockReview");review.replaceChildren();
@@ -985,7 +1008,7 @@ document.getElementById("premiumMockNext").addEventListener("click",()=>{if(prem
 document.getElementById("premiumMockMark").addEventListener("click",()=>{premiumMockMarked[premiumMockIndex]=!premiumMockMarked[premiumMockIndex];renderPremiumMock()});
 document.getElementById("premiumMockClear").addEventListener("click",()=>{delete premiumMockAnswers[premiumMockIndex];renderPremiumMock()});
 document.getElementById("submitPremiumMock").addEventListener("click",()=>submitPremiumMock(false));
-document.getElementById("retakePremiumMock").addEventListener("click",startPremiumMock);
+document.getElementById("premiumMockSelect").addEventListener("change",()=>{const attempt=getSavedPremiumMockAttempt(Number(document.getElementById("premiumMockSelect").value));if(attempt)showPremiumMockReview(attempt);else{document.getElementById("premiumMockPanel").hidden=true;document.getElementById("premiumMockResult").hidden=true;}});
 
 document.getElementById("openCppPremium").addEventListener("click",startCppPremium);
 function renderPremium(){const q=premiumQs[premiumIndex];document.getElementById("premiumProgress").textContent="Question "+(premiumIndex+1)+" of "+premiumQs.length;document.getElementById("premiumModeLabel").textContent="Premium practice · "+document.getElementById("cppPremiumLevel").value;document.getElementById("premiumQuestion").textContent=q.q;const box=document.getElementById("premiumOptions");box.replaceChildren();q.o.forEach((v,i)=>{const b=document.createElement("button");b.className="quiz-option"+(premiumAnswers[premiumIndex]===i?" selected":"");b.textContent=String.fromCharCode(65+i)+". "+v;b.disabled=premiumAnswers[premiumIndex]!==undefined;b.addEventListener("click",()=>{premiumAnswers[premiumIndex]=i;renderPremium()});box.appendChild(b)});const fb=document.getElementById("premiumFeedback");fb.hidden=premiumAnswers[premiumIndex]===undefined;if(!fb.hidden)fb.textContent=(premiumAnswers[premiumIndex]===q.a?"Correct. ":"Incorrect. Correct answer: "+String.fromCharCode(65+q.a)+". "+q.o[q.a]+". ")+q.e;document.getElementById("premiumPrev").disabled=premiumIndex===0;document.getElementById("premiumNext").textContent=premiumIndex===premiumQs.length-1?"Finish bank":"Next question"}
