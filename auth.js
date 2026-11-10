@@ -178,6 +178,11 @@ async function hasPremiumAccess(selection){
   const {data,error}=await supabase.from("student_purchases").select("id,access_type,module_index").eq("student_id",currentSession.user.id).eq("course_code",selection.course_code).eq("status","active");
   if(error)throw error;return (data||[]).some(p=>p.access_type==="course"||(p.access_type==="module"&&p.module_index===selection.module_index));
 }
+function restorePaymentDialog(message,error=false){
+  const d=$("studentPaymentDialog");
+  if(d&&!d.open)d.showModal();
+  paymentNotice(message,error);
+}
 async function startRazorpayPurchase(accessType){
   if(paymentBusy)return;const selection=window.getCMCESelection?.();if(!selection||!currentSession?.user){openAuth("login");return;}
   paymentBusy=true;$("buyModuleAccess").disabled=true;$("buyCourseAccess").disabled=true;paymentNotice("Creating secure payment order…");
@@ -185,18 +190,26 @@ async function startRazorpayPurchase(accessType){
     await ensureRazorpayScript();
     const {data:orderData,error:orderError}=await supabase.functions.invoke("create-razorpay-order",{body:{course_code:selection.course_code,access_type:accessType,module_index:accessType==="module"?selection.module_index:null}});
     if(orderError)throw new Error(orderError.message||"Could not create payment order.");if(!orderData?.order_id||!orderData?.key_id)throw new Error(orderData?.error||"Payment order response is incomplete.");
-    const checkout=new window.Razorpay({key:orderData.key_id,amount:orderData.amount,currency:orderData.currency,order_id:orderData.order_id,name:orderData.name||"CDAC CMCE Prep",description:orderData.description||"Premium access",prefill:orderData.prefill||{email:currentSession.user.email||""},theme:{color:"#126b61"},modal:{ondismiss:()=>paymentNotice("Checkout closed. No premium access has been activated.",true)},handler:async response=>{
-      paymentNotice("Payment received. Verifying securely…");
+    const checkout=new window.Razorpay({key:orderData.key_id,amount:orderData.amount,currency:orderData.currency,order_id:orderData.order_id,name:orderData.name||"CDAC CMCE Prep",description:orderData.description||"Premium access",prefill:orderData.prefill||{email:currentSession.user.email||""},theme:{color:"#126b61"},modal:{ondismiss:()=>restorePaymentDialog("Checkout closed. No premium access has been activated.",true)},handler:async response=>{
+      restorePaymentDialog("Payment received. Verifying securely…");
       try{
         const {data:verification,error}=await supabase.functions.invoke("verify-razorpay-payment",{body:{razorpay_order_id:response.razorpay_order_id,razorpay_payment_id:response.razorpay_payment_id,razorpay_signature:response.razorpay_signature}});
         if(error)throw new Error(error.message||"Payment verification failed.");if(!verification?.success)throw new Error(verification?.error||"Payment could not be verified.");
         $("studentPaymentDialog").close();alert("Payment verified. Your premium access is now active.");
         const pending=window.__pendingPremiumAction;window.__pendingPremiumAction=null;if(pending?.isConnected){replayPremiumClick=true;pending.click();}
-      }catch(err){paymentNotice(err.message||"Verification failed. Contact support if money was deducted.",true);}
+      }catch(err){restorePaymentDialog(err.message||"Verification failed. Contact support if money was deducted.",true);}
     }});
-    checkout.on("payment.failed",response=>paymentNotice(response.error?.description||"Payment failed. You can try again.",true));checkout.open();paymentNotice("Complete payment in the Razorpay checkout window.");
-  }catch(error){paymentNotice(error.message||"Could not start checkout.",true);}
-  finally{paymentBusy=false;$("buyModuleAccess").disabled=false;$("buyCourseAccess").disabled=false;}
+    checkout.on("payment.failed",response=>restorePaymentDialog(response.error?.description||"Payment failed. You can try again.",true));
+    const paymentDialog=$("studentPaymentDialog");
+    if(paymentDialog?.open)paymentDialog.close();
+    checkout.open();
+  }catch(error){
+    restorePaymentDialog(error.message||"Could not start checkout.",true);
+  }finally{
+    paymentBusy=false;
+    if($("buyModuleAccess"))$("buyModuleAccess").disabled=false;
+    if($("buyCourseAccess"))$("buyCourseAccess").disabled=false;
+  }
 }
 document.addEventListener("click",async event=>{
   const target=event.target instanceof Element?event.target.closest(premiumEntrySelectors):null;if(!target)return;
