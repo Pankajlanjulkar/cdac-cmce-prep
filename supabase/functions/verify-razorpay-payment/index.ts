@@ -83,8 +83,11 @@ Deno.serve(async (req) => {
       return json({ error: "Payment is not captured (current status: " + String(payment.status || "unknown") + "). Access has not been granted." }, 400);
     }
 
+    // Keep activation independent of the optional audit column migration.
+    // The payment ID is already verified with Razorpay above; the purchase
+    // record only needs its status changed to grant the entitlement.
     const { data: activated, error: updateError } = await serviceClient.from("student_purchases").update({
-      status: "active", provider_payment_id: razorpay_payment_id,
+      status: "active",
     }).eq("id", purchase.id).eq("student_id", user.id).eq("status", "pending").select("id").maybeSingle();
     if (updateError) return json({ error: "Payment captured, but access activation failed: " + updateError.message }, 500);
     if (!activated) {
