@@ -223,23 +223,37 @@ async function startRazorpayPurchase(accessType){
     if($("buyCourseAccess"))$("buyCourseAccess").disabled=false;
   }
 }
-function startPurchaseFromPlans(accessType){
-  const selection=window.getCMCESelection?.();
-  if(!selection){
-    alert("Please choose a programme and module first, then return to Plans to purchase access.");
-    document.getElementById("courses")?.scrollIntoView({behavior:"smooth"});
+let pendingPlansPurchase=null;
+function showPlansPurchaseMessage(message){
+  let box=$("plansPurchaseNotice");
+  if(!box){
+    box=document.createElement("div");
+    box.id="plansPurchaseNotice";
+    box.className="notice";
+    box.style.marginTop="16px";
+    $("plans")?.append(box);
+  }
+  box.textContent=message;
+}
+async function startPurchaseFromPlans(accessType){
+  pendingPlansPurchase=accessType;
+  if(!currentSession?.user){
+    showPlansPurchaseMessage("Please sign in using Student Login. Your purchase choice will be kept, and checkout will continue after login.");
+    openAuth("login");
     return;
   }
-  if(!currentSession?.user){
-    openAuth("login");
-    alert("Please sign in first. After signing in, return to Plans and select your purchase.");
+  const selection=window.getCMCESelection?.();
+  if(!selection){
+    showPlansPurchaseMessage("First select a programme and one of its modules in Explore courses. Then return here to complete your purchase.");
+    document.getElementById("courses")?.scrollIntoView({behavior:"smooth"});
     return;
   }
   const d=ensurePaymentDialog();
   $("paymentSelectionText").textContent=selection.course_name+" · "+selection.module_name+". "+(accessType==="course"?"Unlock every module in this course.":"Unlock this module only.");
-  paymentNotice("Ready to purchase premium access.");
+  paymentNotice("Starting secure checkout…");
   if(!d.open)d.showModal();
-  startRazorpayPurchase(accessType);
+  pendingPlansPurchase=null;
+  await startRazorpayPurchase(accessType);
 }
 $("buyCourseFromPlans")?.addEventListener("click",()=>startPurchaseFromPlans("course"));
 $("buyModuleFromPlans")?.addEventListener("click",()=>startPurchaseFromPlans("module"));
@@ -305,5 +319,11 @@ document.addEventListener("click",async event=>{
     paymentNotice("Premium access is required to continue.");if(!d.open)d.showModal();
   }catch(error){alert("Could not check premium access: "+(error.message||"Please try again."));}
 },true);
-supabase.auth.onAuthStateChange((_event,session)=>syncAuthUI(session));
+supabase.auth.onAuthStateChange((_event,session)=>{
+  syncAuthUI(session);
+  if(session?.user&&pendingPlansPurchase){
+    const requested=pendingPlansPurchase;
+    setTimeout(()=>startPurchaseFromPlans(requested),0);
+  }
+});
 const {data:{session}}=await supabase.auth.getSession();syncAuthUI(session);
