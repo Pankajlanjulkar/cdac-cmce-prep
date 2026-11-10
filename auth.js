@@ -162,7 +162,7 @@ $("profileForm").addEventListener("submit", async event => {
 
 
 const premiumEntrySelectors=["#openPremiumBankSection","#openPremiumMocksSection","#openCppPremium","#startPremiumMock"].join(",");
-let paymentBusy=false,replayPremiumClick=false;
+let paymentBusy=false,replayPremiumClick=false,courseDialogSuspendedForCheckout=false;
 function ensureRazorpayScript(){
   if(window.Razorpay)return Promise.resolve();
   return new Promise((resolve,reject)=>{const script=document.createElement("script");script.src="https://checkout.razorpay.com/v1/checkout.js";script.async=true;script.onload=resolve;script.onerror=()=>reject(new Error("Could not load Razorpay Checkout."));document.head.append(script);});
@@ -178,7 +178,18 @@ async function hasPremiumAccess(selection){
   const {data,error}=await supabase.from("student_purchases").select("id,access_type,module_index").eq("student_id",currentSession.user.id).eq("course_code",selection.course_code).eq("status","active");
   if(error)throw error;return (data||[]).some(p=>p.access_type==="course"||(p.access_type==="module"&&p.module_index===selection.module_index));
 }
+function suspendCourseDialogForCheckout(){
+  const d=$("courseDialog");
+  if(d?.open){d.close();courseDialogSuspendedForCheckout=true;}
+}
+function restoreCourseDialogAfterCheckout(){
+  if(!courseDialogSuspendedForCheckout)return;
+  const d=$("courseDialog");
+  if(d&&!d.open)d.showModal();
+  courseDialogSuspendedForCheckout=false;
+}
 function restorePaymentDialog(message,error=false){
+  restoreCourseDialogAfterCheckout();
   const d=$("studentPaymentDialog");
   if(d&&!d.open)d.showModal();
   paymentNotice(message,error);
@@ -195,13 +206,14 @@ async function startRazorpayPurchase(accessType){
       try{
         const {data:verification,error}=await supabase.functions.invoke("verify-razorpay-payment",{body:{razorpay_order_id:response.razorpay_order_id,razorpay_payment_id:response.razorpay_payment_id,razorpay_signature:response.razorpay_signature}});
         if(error)throw new Error(error.message||"Payment verification failed.");if(!verification?.success)throw new Error(verification?.error||"Payment could not be verified.");
-        $("studentPaymentDialog").close();alert("Payment verified. Your premium access is now active.");
+        $("studentPaymentDialog").close();restoreCourseDialogAfterCheckout();alert("Payment verified. Your premium access is now active.");
         const pending=window.__pendingPremiumAction;window.__pendingPremiumAction=null;if(pending?.isConnected){replayPremiumClick=true;pending.click();}
       }catch(err){restorePaymentDialog(err.message||"Verification failed. Contact support if money was deducted.",true);}
     }});
     checkout.on("payment.failed",response=>restorePaymentDialog(response.error?.description||"Payment failed. You can try again.",true));
     const paymentDialog=$("studentPaymentDialog");
     if(paymentDialog?.open)paymentDialog.close();
+    suspendCourseDialogForCheckout();
     checkout.open();
   }catch(error){
     restorePaymentDialog(error.message||"Could not start checkout.",true);
