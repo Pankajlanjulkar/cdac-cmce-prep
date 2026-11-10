@@ -37,7 +37,60 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userError } = await userClient.auth.getUser();
     if (userError || !user) return json({ error: "Your session is invalid. Please log in again." }, 401);
 
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();
+    const requestBody = await req.json();
+
+    // Recover earlier successful payments for this signed-in student. This
+    // uses Razorpay's server-to-server order payments API, so no client-supplied
+    // payment ID or signature is trusted for recovery.
+    if (requestBody?.action === "recover_pending") {
+      const serviceClient = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+      const { data: pending, error: pendingError } = await serviceClient.from("student_purchases")
+        .select("id,provider_reference,amount_inr")
+        .eq("provider", "razorpay").eq("student_id", user.id).eq("status", "pending");
+      if (pendingError) return json({ error: "Could not check pending purchases: " + pendingError.message }, 500);
+
+      let recovered = 0;
+      for (const purchase of pending || []) {
+        if (!purchase.provider_reference) continue;
+        const paymentsResponse = await fetch("https://api.razorpay.com/v1/orders/" +
+          encodeURIComponent(purchase.provider_reference) + "/payments", {
+            headers: { "Authorization": "Basic " + btoa(razorpayKeyId + ":" + razorpaySecret) },
+          });
+        const paymentsData = await paymentsResponse.json();
+        if (!paymentsResponse.ok) continue;
+
+        for (let payment of paymentsData.items || []) {
+          if (payment.order_id !== purchase.provider_reference ||
+              payment.amount !== purchase.amount_inr * 100 || payment.currency !== "INR") continue;
+
+          if (payment.status === "authorized") {
+            const captureResponse = await fetch("https://api.razorpay.com/v1/payments/" +
+              encodeURIComponent(payment.id) + "/capture", {
+                method: "POST",
+                headers: {
+                  "Authorization": "Basic " + btoa(razorpayKeyId + ":" + razorpaySecret),
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ amount: purchase.amount_inr * 100, currency: "INR" }),
+              });
+            payment = await captureResponse.json();
+            if (!captureResponse.ok) continue;
+          }
+
+          if (payment.status !== "captured") continue;
+          const { data: activated, error: activationError } = await serviceClient.from("student_purchases")
+            .update({ status: "active" }).eq("id", purchase.id).eq("student_id", user.id)
+            .eq("status", "pending").select("id").maybeSingle();
+          if (!activationError && activated) recovered++;
+          break;
+        }
+      }
+      return json({ success: true, recovered, message: recovered
+        ? recovered + " previous successful purchase(s) restored."
+        : "No captured pending payments were found for this account." });
+    }
+
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = requestBody;
     if (![razorpay_order_id, razorpay_payment_id, razorpay_signature].every((v) => typeof v === "string" && v.length > 0)) {
       return json({ error: "Missing payment verification details." }, 400);
     }
