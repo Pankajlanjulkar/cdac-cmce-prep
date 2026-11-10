@@ -2,6 +2,12 @@ name: Deploy Razorpay payment verification function
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "supabase/functions/verify-razorpay-payment/**"
+      - ".github/workflows/deploy-razorpay-verification.yml"
 
 jobs:
   deploy:
