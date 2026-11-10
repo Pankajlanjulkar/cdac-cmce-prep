@@ -244,8 +244,16 @@ async function startPurchaseFromPlans(accessType){
   }
   const selection=window.getCMCESelection?.();
   if(!selection){
-    showPlansPurchaseMessage("First select a programme and one of its modules in Explore courses. Then return here to complete your purchase.");
-    document.getElementById("courses")?.scrollIntoView({behavior:"smooth"});
+    // Open the existing course picker instead of sending the student away.
+    // The purchase intent is retained and checkout resumes once a module is selected.
+    showPlansPurchaseMessage("Choose a programme and module in the selector to continue directly to secure checkout.");
+    const firstCourseButton=document.querySelector("#courseGrid .course button");
+    if(firstCourseButton){
+      window.__pendingPlansPurchaseAfterSelection=accessType;
+      firstCourseButton.click();
+    }else{
+      showPlansPurchaseMessage("Course list is still loading. Please wait a moment and try again.");
+    }
     return;
   }
   const d=ensurePaymentDialog();
@@ -255,6 +263,17 @@ async function startPurchaseFromPlans(accessType){
   pendingPlansPurchase=null;
   await startRazorpayPurchase(accessType);
 }
+// Resume a purchase after the student selects a module in the existing course picker.
+const purchaseSelectionObserver=new MutationObserver(()=>{
+  const accessType=window.__pendingPlansPurchaseAfterSelection;
+  const selection=window.getCMCESelection?.();
+  if(accessType&&selection&&currentSession?.user){
+    window.__pendingPlansPurchaseAfterSelection=null;
+    startPurchaseFromPlans(accessType);
+  }
+});
+const selectedTitle=document.getElementById("selectedModuleTitle");
+if(selectedTitle)purchaseSelectionObserver.observe(selectedTitle,{childList:true,characterData:true,subtree:true});
 $("buyCourseFromPlans")?.addEventListener("click",()=>startPurchaseFromPlans("course"));
 $("buyModuleFromPlans")?.addEventListener("click",()=>startPurchaseFromPlans("module"));
 
