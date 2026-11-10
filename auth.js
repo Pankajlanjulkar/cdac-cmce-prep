@@ -206,8 +206,9 @@ document.addEventListener("click",async event=>{
   const selection=window.getCMCESelection?.();if(!selection){alert("Please select a course module first.");return;}
   try{
     if(await hasPremiumAccess(selection)){target.click();return;}
-    window.__pendingPremiumAction=target;$("paymentSelectionText").textContent=selection.course_name+" · "+selection.module_name+". Choose module-only access or unlock every module in this course.";
-    paymentNotice("Premium access is required to continue.");const d=ensurePaymentDialog();if(!d.open)d.showModal();
+    window.__pendingPremiumAction=target;const d=ensurePaymentDialog();
+    $("paymentSelectionText").textContent=selection.course_name+" · "+selection.module_name+". Choose module-only access or unlock every module in this course.";
+    paymentNotice("Premium access is required to continue.");if(!d.open)d.showModal();
   }catch(error){alert("Could not check premium access: "+(error.message||"Please try again."));}
 },true);
 supabase.auth.onAuthStateChange((_event,session)=>syncAuthUI(session));
