@@ -961,7 +961,6 @@ const savedAttempt=getSavedPremiumMockAttempt(testIndex);
 if(savedAttempt){showPremiumMockReview(savedAttempt);return;}
 const banks=getPremiumBanksForSelectedModule();
 if(!banks||banks.some(bank=>!Array.isArray(bank)||bank.length!==100)){alert("All three 100-question difficulty banks must be ready before mock tests can start.");return;}
-const testIndex=Number(document.getElementById("premiumMockSelect").value);
 premiumMockQs=[...takeRotated(banks[0],testIndex*9,14),...takeRotated(banks[1],testIndex*9,13),...takeRotated(banks[2],testIndex*9,13)].map(normalizePremiumMockQuestion);
 if(premiumMockQs.length!==40||premiumMockQs.some(q=>!q.q||q.o.length!==4||!Number.isInteger(q.a)||q.a<0||q.a>3)){alert("This mock test contains invalid question data and cannot be started.");return;}
 premiumMockIndex=0;premiumMockAnswers={};premiumMockMarked={};premiumMockSubmitted=false;premiumMockSeconds=3600;premiumMockDeadline=Date.now()+3600000;
