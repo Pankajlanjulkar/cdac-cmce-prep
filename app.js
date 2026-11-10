@@ -829,14 +829,21 @@ document.getElementById("clearExamAnswer").addEventListener("click",()=>{delete 
 document.getElementById("examNext").addEventListener("click",()=>{if(examIndex<examQs.length-1){examIndex++;renderExam()}else{if(confirm("You have reached the last question. Submit the test now?"))submitExam(false)}});
 document.getElementById("submitExam").addEventListener("click",()=>{const unanswered=examQs.length-Object.keys(examAnswers).length;const marked=Object.keys(examMarked).filter(k=>examMarked[k]).length;const msg="Submit this test?\\n\\nAnswered: "+Object.keys(examAnswers).length+"\\nUnanswered: "+unanswered+"\\nMarked for review: "+marked+"\\n\\nYou cannot change answers after submission.";if(confirm(msg))submitExam(false)});
 function submitExam(auto){if(examSubmitted)return;examSubmitted=true;if(examTimer){clearInterval(examTimer);examTimer=null}const score=examQs.reduce((n,q,i)=>n+(examAnswers[i]===q.a?1:0),0);document.getElementById("examInterface").hidden=true;document.getElementById("examResult").hidden=false;document.getElementById("examScore").textContent=score+" / "+examQs.length;document.getElementById("examSummary").textContent=(auto?"Time expired. ":"Test submitted. ")+Object.keys(examAnswers).length+" answered · "+(examQs.length-Object.keys(examAnswers).length)+" unanswered · "+Object.keys(examMarked).filter(k=>examMarked[k]).length+" marked for review · "+Math.round(score/examQs.length*100)+"%";const review=document.getElementById("examReview");review.replaceChildren();examQs.forEach((q,i)=>{const d=document.createElement("div");d.className="review-item";const h=document.createElement("strong");h.textContent="Q"+(i+1)+". "+q.q;const p=document.createElement("p");p.textContent="Your answer: "+(examAnswers[i]===undefined?"Not answered":String.fromCharCode(65+examAnswers[i])+". "+q.o[examAnswers[i]])+" · Correct answer: "+String.fromCharCode(65+q.a)+". "+q.o[q.a];const e=document.createElement("p");e.textContent=q.e;d.append(h,p,e);review.appendChild(d)})}
+function normalizePreviewQuestion(raw){
+if(Array.isArray(raw))return {q:raw[0]??"",o:Array.isArray(raw[1])?raw[1]:[],a:Number(raw[2]),e:raw[3]??""};
+if(!raw||typeof raw!=="object")return {q:"",o:[],a:-1,e:""};
+return {q:raw.q??raw.question??raw.text??raw.prompt??"",o:raw.o??raw.options??raw.choices??raw.answers??[],a:Number(raw.a??raw.answerIndex??raw.correctAnswer??raw.answer),e:raw.e??raw.explanation??""};
+}
 function showQ(){
- const q=activeQs[qi];
+ const q=normalizePreviewQuestion(activeQs[qi]);
  document.getElementById("quizProgress").textContent="Question "+(qi+1)+" of "+activeQs.length;
- document.getElementById("quizQuestion").textContent=q.q;
- const box=document.getElementById("quizOptions");box.replaceChildren();
+ const questionEl=document.getElementById("quizQuestion");
+ questionEl.textContent=q.q||"Question content is unavailable. Please report this module so its question data can be corrected.";
+ questionEl.hidden=false;
+ const box=document.getElementById("quizOptions");box.replaceChildren();box.hidden=false;
  q.o.forEach((v,i)=>{const btn=document.createElement("button");btn.className="quiz-option"+(qa[qi]===i?" selected":"");btn.textContent=String.fromCharCode(65+i)+". "+v;btn.disabled=!platformTestMode&&qa[qi]!==undefined;btn.addEventListener("click",()=>{qa[qi]=i;showQ()});box.appendChild(btn)});
  const fb=document.getElementById("quizFeedback");fb.hidden=platformTestMode||qa[qi]===undefined;
- if(!fb.hidden)fb.textContent=(qa[qi]===q.a?"Correct. ":"Incorrect. Correct answer: "+String.fromCharCode(65+q.a)+". "+q.o[q.a]+". ")+q.e;
+ if(!fb.hidden)fb.textContent=(qa[qi]===q.a?"Correct. ":"Incorrect. Correct answer: "+String.fromCharCode(65+q.a)+". "+(q.o[q.a]??"")+". ")+q.e;
  document.getElementById("quizPrev").disabled=qi===0;
  document.getElementById("quizNext").textContent=qi===activeQs.length-1?"Finish preview":"Next question";
 }
@@ -902,7 +909,7 @@ document.getElementById("premiumPrev").addEventListener("click",()=>{if(premiumI
 function finishPreview(){
  if(platformTimer){clearInterval(platformTimer);platformTimer=null}
  const answered=Object.keys(qa).length;
- const score=activeQs.reduce((sum,q,i)=>sum+(qa[i]===q.a?1:0),0);
+ const score=activeQs.reduce((sum,q,i)=>sum+(qa[i]===normalizePreviewQuestion(q).a?1:0),0);
  document.getElementById("quizResult").hidden=false;
  document.getElementById("quizResultScore").textContent=score+" / "+activeQs.length;
  document.getElementById("quizResultSummary").textContent="You answered "+answered+" of "+activeQs.length+" questions. "+(activeQs.length-answered)+" unanswered.";
