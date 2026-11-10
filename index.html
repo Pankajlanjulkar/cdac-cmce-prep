@@ -864,7 +864,7 @@ function finishPreview(){
  document.getElementById("quizResult").hidden=false;
  document.getElementById("quizResultScore").textContent=score+" / "+activeQs.length;
  document.getElementById("quizResultSummary").textContent="You answered "+answered+" of "+activeQs.length+" questions. "+(activeQs.length-answered)+" unanswered.";
- document.getElementById("quizResultMessage").textContent=platformTestMode?(score>=48?"Strong performance. Review any incorrect and unanswered questions.":score>=36?"Good attempt. Revise the topics you missed and try again.":"Review the explanations and strengthen your C++ fundamentals before retaking the test."):score>=16?"Excellent work. Keep practising to strengthen your programming fundamentals.":score>=10?"Good attempt. Review the explanations and practise the topics you missed.":"Use the explanations to revise the fundamentals, then try the preview again.";
+ document.getElementById("quizResultMessage").textContent=platformTestMode?(score>=48?"Strong performance. Review any incorrect and unanswered questions.":score>=36?"Good attempt. Revise the topics you missed and try again.":"Review the explanations and strengthen your fundamentals for this module before retaking the test."):score>=16?"Excellent work. Keep practising to strengthen your programming fundamentals.":score>=10?"Good attempt. Review the explanations and practise the topics you missed.":"Use the explanations to revise the fundamentals, then try the preview again.";
 }
 
 document.getElementById("quizPrev").addEventListener("click",()=>{if(qi>0){qi--;showQ()}});
