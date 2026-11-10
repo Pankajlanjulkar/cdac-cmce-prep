@@ -795,7 +795,7 @@ const mcDsaPremiumModerateQs=[{"q":"What is the time complexity of the following
 let activeQs=cppQs;
 let qi=0;const qa={};
 let platformTestMode=false;let platformTimer=null;let platformSeconds=3600;
-let selectedCourse=null,selectedModuleIndex=-1,premiumQs=[],premiumIndex=0,premiumAnswers={},examQs=[],examIndex=0,examAnswers={},examMarked={},examTimer=null,examSeconds=3600,examSubmitted=false;
+let selectedCourse=null,selectedModuleIndex=-1,premiumQs=[],premiumIndex=0,premiumAnswers={},examQs=[],examIndex=0,examAnswers={},examMarked={},examTimer=null,examSeconds=3600,examDeadline=0,examSubmitted=false;
 function openWorkspacePage(id){["workspaceHome","previewPage","premiumPage","testPage"].forEach(x=>document.getElementById(x).hidden=x!==id);document.getElementById("quizPanel").hidden=id!=="previewPage";document.getElementById("premiumPracticePanel").hidden=true;document.getElementById("testIntro").hidden=false;document.getElementById("examInterface").hidden=true;document.getElementById("examResult").hidden=true;dlg.scrollTop=0;requestAnimationFrame(()=>document.getElementById(id).scrollIntoView({behavior:"smooth",block:"start"}))}
 document.getElementById("workspaceBack").addEventListener("click",()=>{document.getElementById("moduleWorkspace").hidden=true;document.getElementById("moduleGrid").hidden=false});
 document.getElementById("goPreview").addEventListener("click",()=>{openWorkspacePage("previewPage");platformTestMode=false;activeQs=selectedCourse.code==="PGCP-AC"&&selectedModuleIndex===0?cppQs:activeQs;startPreview()});
@@ -804,18 +804,22 @@ document.getElementById("goTest").addEventListener("click",()=>openWorkspacePage
 document.querySelectorAll(".backWorkspace").forEach(b=>b.addEventListener("click",()=>openWorkspacePage("workspaceHome")));
 document.getElementById("beginExam").addEventListener("click",startExam);
 function startExam(){
+if(examTimer){clearInterval(examTimer);examTimer=null;}
 if(selectedCourse.code==="PGCP-AC"&&selectedModuleIndex===0){examQs=cppPremiumEasyQs.slice(0,20).concat(cppPremiumModerateQs.slice(0,20));}
 else if(selectedCourse.code==="PGCP-AC"&&selectedModuleIndex===1){examQs=javaPlatformTestQs.slice(0,40);}
 else if(selectedCourse.code==="PGCP-AC"&&selectedModuleIndex===2){examQs=dsaPlatformTestQs.slice(0,40);}
 else if(selectedCourse.code==="PGCP-AC"&&selectedModuleIndex===3){examQs=dbPlatformTestQs.slice(0,40);}
 else if(selectedCourse.code==="PGCP-AC"&&selectedModuleIndex===4){examQs=webPlatformTestQs.slice(0,40);}
-else{examQs=Array.isArray(activeQs)?activeQs.slice(0,40):[];}
+else{
+const sourceQs=Array.isArray(activeQs)?activeQs:[];
+examQs=sourceQs.length?Array.from({length:40},(_,i)=>sourceQs[i%sourceQs.length]):[];
+}
 if(!examQs.length){document.getElementById("testIntro").insertAdjacentHTML("beforeend",'<p class="notice">A verified question set is not available for this module yet.</p>');return;}
 const intro=document.querySelector("#testIntro p");
-if(intro)intro.textContent="This free mock test contains "+examQs.length+" MCQs and has a 60-minute time limit. Your score, correct answers and explanations will be available after submission.";
-examIndex=0;examAnswers={};examMarked={};examSubmitted=false;examSeconds=3600;
+if(intro)intro.textContent="This free mock test contains exactly 40 MCQs and has a 60-minute time limit. Your score, correct answers and explanations will be available after submission.";
+examIndex=0;examAnswers={};examMarked={};examSubmitted=false;examSeconds=3600;examDeadline=Date.now()+3600000;
 document.getElementById("testIntro").hidden=true;document.getElementById("examResult").hidden=true;document.getElementById("examInterface").hidden=false;
-renderExam();updateExamTimer();examTimer=setInterval(()=>{examSeconds--;updateExamTimer();if(examSeconds<=0)submitExam(true)},1000);
+renderExam();updateExamTimer();examTimer=setInterval(()=>{examSeconds=Math.max(0,Math.ceil((examDeadline-Date.now())/1000));updateExamTimer();if(examSeconds<=0)submitExam(true)},1000);
 }
 function updateExamTimer(){const mm=String(Math.floor(examSeconds/60)).padStart(2,"0"),ss=String(examSeconds%60).padStart(2,"0");const t=document.getElementById("examTimer");t.textContent=mm+":"+ss;t.style.color=examSeconds<=300?"#b42318":"#176b45"}
 function renderExam(){const q=examQs[examIndex];document.getElementById("examQuestionCount").textContent="Question "+(examIndex+1)+" of "+examQs.length;document.getElementById("examQuestion").textContent=q.q;const box=document.getElementById("examOptions");box.replaceChildren();q.o.forEach((v,i)=>{const b=document.createElement("button");b.type="button";b.className="exam-option"+(examAnswers[examIndex]===i?" selected":"");const letter=document.createElement("span");letter.className="letter";letter.textContent=String.fromCharCode(65+i);const label=document.createElement("span");label.textContent=v;b.append(letter,label);b.addEventListener("click",()=>{examAnswers[examIndex]=i;renderExam()});box.appendChild(b)});document.getElementById("examPrev").disabled=examIndex===0;document.getElementById("examNext").textContent=examIndex===examQs.length-1?"Review answers":"Save & Next";document.getElementById("examAnsweredCount").textContent=Object.keys(examAnswers).length+" of "+examQs.length+" answered";document.getElementById("examMarkedCount").textContent=Object.keys(examMarked).filter(k=>examMarked[k]).length+" marked for review";document.getElementById("markForReview").textContent=examMarked[examIndex]?"★ Marked for review":"☆ Mark for review";const pal=document.getElementById("questionPalette");pal.replaceChildren();examQs.forEach((_,i)=>{const b=document.createElement("button");b.type="button";b.className="question-jump"+(i===examIndex?" current":"")+(examAnswers[i]!==undefined?" answered":"")+(examMarked[i]?" marked":"");b.textContent=i+1;b.addEventListener("click",()=>{examIndex=i;renderExam()});pal.appendChild(b)})}
