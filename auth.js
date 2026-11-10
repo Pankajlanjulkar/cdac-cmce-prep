@@ -33,6 +33,31 @@ const authButton = document.createElement("button");
 authButton.className = "btn secondary auth-trigger";
 authButton.type = "button";authButton.id = "studentAuthButton";authButton.textContent = "Student Login";
 nav?.append(authButton);
+const profileButton = document.createElement("button");
+profileButton.className = "btn secondary auth-trigger";
+profileButton.type = "button";
+profileButton.id = "studentProfileButton";
+profileButton.textContent = "My Profile";
+profileButton.hidden = true;
+nav?.append(profileButton);
+
+const profileDialog = document.createElement("dialog");
+profileDialog.id = "studentProfileDialog";
+profileDialog.className = "auth-dialog";
+profileDialog.innerHTML = `
+  <button class="close" type="button" id="profileClose">Close</button>
+  <div class="eyebrow">Student account</div>
+  <h2>My Profile</h2>
+  <p class="auth-muted">Your student details are stored securely in your account.</p>
+  <div id="profileNotice" aria-live="polite"></div>
+  <form id="profileForm">
+    <label>Full name<input id="profileName" autocomplete="name" maxlength="100" required></label>
+    <label>Email address<input id="profileEmail" type="email" disabled></label>
+    <button class="btn" id="profileSave" type="submit">Save profile</button>
+  </form>
+`;
+document.body.append(profileDialog);
+
 
 const $ = id => document.getElementById(id);
 let mode = "login", busy = false, currentSession = null;
@@ -85,8 +110,55 @@ $("authForm").addEventListener("submit",async event=>{
 function syncAuthUI(session) {
   currentSession=session||null;authButton.textContent=currentSession?.user?"Logout":"Student Login";
   authButton.title=currentSession?.user?.email||"Student account";
-  document.documentElement.dataset.studentSignedIn=currentSession?.user?"true":"false";
+  document.documentElement.dataset.studentSignedIn=currentSession?.user?"true":"false";\n  profileButton.hidden = !currentSession?.user;
 }
+
+function profileNotice(message, error = false) {
+  const box = document.createElement("div");
+  box.className = "auth-message" + (error ? " error" : "");
+  box.textContent = message;
+  $("profileNotice").replaceChildren(box);
+}
+async function openStudentProfile() {
+  if (!currentSession?.user) { openAuth("login"); return; }
+  $("profileNotice").replaceChildren();
+  $("profileName").value = currentSession.user.user_metadata?.full_name || "";
+  $("profileEmail").value = currentSession.user.email || "";
+  if (!profileDialog.open) profileDialog.showModal();
+  const { data, error } = await supabase.from("student_profiles")
+    .select("full_name,email").eq("id", currentSession.user.id).maybeSingle();
+  if (error) {
+    profileNotice("Profile storage is not set up yet. Run the supplied Supabase SQL setup first.", true);
+    return;
+  }
+  if (data) $("profileName").value = data.full_name || $("profileName").value;
+}
+profileButton.addEventListener("click", openStudentProfile);
+$("profileClose").addEventListener("click", () => profileDialog.close());
+$("profileForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!currentSession?.user) { profileDialog.close(); openAuth("login"); return; }
+  const fullName = $("profileName").value.trim();
+  if (!fullName) { profileNotice("Please enter your full name.", true); return; }
+  $("profileSave").disabled = true;
+  try {
+    const { error } = await supabase.from("student_profiles").upsert({
+      id: currentSession.user.id,
+      full_name: fullName,
+      email: currentSession.user.email,
+      updated_at: new Date().toISOString()
+    }, { onConflict: "id" });
+    if (error) throw error;
+    const { error: metaError } = await supabase.auth.updateUser({ data: { full_name: fullName } });
+    if (metaError) throw metaError;
+    profileNotice("Your profile has been updated.");
+  } catch (error) {
+    profileNotice(error.message || "Could not update profile.", true);
+  } finally {
+    $("profileSave").disabled = false;
+  }
+});
+
 const premiumEntrySelectors=["#goPremium","#openPremiumBankSection","#openPremiumMocksSection","#openCppPremium","#startPremiumMock"].join(",");
 document.addEventListener("click",event=>{
   const target=event.target instanceof Element?event.target.closest(premiumEntrySelectors):null;
