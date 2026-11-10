@@ -171,7 +171,11 @@ function ensurePaymentDialog(){
   let d=$("studentPaymentDialog");if(d)return d;
   d=document.createElement("dialog");d.id="studentPaymentDialog";d.className="auth-dialog";
   d.innerHTML='<button class="close" type="button" id="paymentClose">Close</button><div class="eyebrow">Unlock premium access</div><h2>Choose your access</h2><p class="auth-muted" id="paymentSelectionText"></p><div id="paymentNotice" aria-live="polite"></div><div class="auth-actions" style="display:grid"><button class="btn" type="button" id="buyModuleAccess">Unlock this module · ₹10</button><button class="btn secondary" type="button" id="buyCourseAccess">Unlock complete course · ₹40</button></div><p class="auth-muted">Secure checkout powered by Razorpay. Access is activated only after payment verification.</p>';
-  document.body.append(d);$("paymentClose").addEventListener("click",()=>d.close());$("buyModuleAccess").addEventListener("click",()=>startRazorpayPurchase("module"));$("buyCourseAccess").addEventListener("click",()=>startRazorpayPurchase("course"));return d;
+  document.body.append(d);
+  $("paymentClose").addEventListener("click",()=>d.close());
+  $("buyModuleAccess").addEventListener("click",()=>{window.__premiumPurchaseChoiceStarted=true;startRazorpayPurchase("module");});
+  $("buyCourseAccess").addEventListener("click",()=>{window.__premiumPurchaseChoiceStarted=true;startRazorpayPurchase("course");});
+  return d;
 }
 function paymentNotice(message,error=false){const n=$("paymentNotice");if(!n)return;const box=document.createElement("div");box.className="auth-message"+(error?" error":"");box.textContent=message;n.replaceChildren(box);}
 async function hasPremiumAccess(selection){
@@ -307,27 +311,34 @@ document.addEventListener("click",async event=>{
     const accessDialog=ensurePaymentDialog();
     $("paymentSelectionText").textContent=selection.course_name+" · "+selection.module_name+". Choose module-only access or unlock every module in this course.";
     paymentNotice("Checking your existing premium access…");
-    $("buyModuleAccess").disabled=true;
-    $("buyCourseAccess").disabled=true;
+    // Keep both purchase choices clickable while checking existing access.
+    // If the student starts checkout, the background entitlement check must not
+    // close the dialog or overwrite the checkout state.
+    window.__premiumPurchaseChoiceStarted=false;
     if(!accessDialog.open)accessDialog.showModal();
 
     // Check active entitlement, then attempt recovery only when necessary.
     if(await hasPremiumAccess(selection)){
+      if(window.__premiumPurchaseChoiceStarted)return;
       if(accessDialog.open)accessDialog.close();
       openPremiumTarget();
       return;
     }
 
+    if(window.__premiumPurchaseChoiceStarted)return;
     const {data:recovery,error:recoveryError}=await supabase.functions.invoke("verify-razorpay-payment",{body:{action:"recover_pending"}});
     if(recoveryError)console.warn("Could not recover pending premium purchases:",recoveryError.message);
     else if(recovery?.recovered>0)console.info(recovery.message);
 
+    if(window.__premiumPurchaseChoiceStarted)return;
     if(await hasPremiumAccess(selection)){
+      if(window.__premiumPurchaseChoiceStarted)return;
       if(accessDialog.open)accessDialog.close();
       openPremiumTarget();
       return;
     }
 
+    if(window.__premiumPurchaseChoiceStarted)return;
     paymentNotice("Premium access is required to continue.");
     $("buyModuleAccess").disabled=false;
     $("buyCourseAccess").disabled=false;
