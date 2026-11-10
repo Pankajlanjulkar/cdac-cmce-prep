@@ -223,6 +223,27 @@ async function startRazorpayPurchase(accessType){
     if($("buyCourseAccess"))$("buyCourseAccess").disabled=false;
   }
 }
+function startPurchaseFromPlans(accessType){
+  const selection=window.getCMCESelection?.();
+  if(!selection){
+    alert("Please choose a programme and module first, then return to Plans to purchase access.");
+    document.getElementById("courses")?.scrollIntoView({behavior:"smooth"});
+    return;
+  }
+  if(!currentSession?.user){
+    openAuth("login");
+    alert("Please sign in first. After signing in, return to Plans and select your purchase.");
+    return;
+  }
+  const d=ensurePaymentDialog();
+  $("paymentSelectionText").textContent=selection.course_name+" · "+selection.module_name+". "+(accessType==="course"?"Unlock every module in this course.":"Unlock this module only.");
+  paymentNotice("Ready to purchase premium access.");
+  if(!d.open)d.showModal();
+  startRazorpayPurchase(accessType);
+}
+$("buyCourseFromPlans")?.addEventListener("click",()=>startPurchaseFromPlans("course"));
+$("buyModuleFromPlans")?.addEventListener("click",()=>startPurchaseFromPlans("module"));
+
 document.addEventListener("click",async event=>{
   const target=event.target instanceof Element?event.target.closest(premiumEntrySelectors):null;if(!target)return;
   if(replayPremiumClick){replayPremiumClick=false;return;}
