@@ -1,0 +1,1209 @@
+{
+  "course": "PG-DAC",
+  "module": "Algorithms and Data Structures Using Java",
+  "batch": "August 2026",
+  "difficulty": "Moderate",
+  "count": 100,
+  "questions": [
+    {
+      "q": "A Java array contains 12 elements. What is the largest valid index?",
+      "o": [
+        "11",
+        "12",
+        "10",
+        "13"
+      ],
+      "a": 0,
+      "e": "Java arrays use zero-based indexing, so the final index is length minus one.",
+      "level": "Moderate"
+    },
+    {
+      "q": "An algorithm checks every pair of distinct elements once using i<j. How many pairs are checked for n elements?",
+      "o": [
+        "n²",
+        "n(n−1)/2",
+        "2n",
+        "n log n"
+      ],
+      "a": 1,
+      "e": "There are n choices for the first position and n−1 later positions, divided by two because each unordered pair is counted once.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A method performs one loop over n items and a separate nested loop over n items. What is its overall time complexity?",
+      "o": [
+        "O(n²)",
+        "O(2n)",
+        "O(log n)",
+        "O(n log n)"
+      ],
+      "a": 0,
+      "e": "The costs O(n) and O(n²) add; the dominant term is O(n²).",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which statement about Big-O notation is correct?",
+      "o": [
+        "It gives an exact runtime in seconds",
+        "It describes an asymptotic upper bound",
+        "It applies only to recursive algorithms",
+        "It ignores input size"
+      ],
+      "a": 1,
+      "e": "Big-O expresses an asymptotic upper bound on growth, independent of machine-specific seconds.",
+      "level": "Moderate"
+    },
+    {
+      "q": "An algorithm uses an auxiliary array whose size grows proportionally to n. What is its auxiliary space complexity?",
+      "o": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n²)"
+      ],
+      "a": 2,
+      "e": "An additional array with a linear number of entries requires linear auxiliary space.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A loop variable is multiplied by 3 after every iteration until it exceeds n. How many iterations occur?",
+      "o": [
+        "O(n)",
+        "O(log n)",
+        "O(n log n)",
+        "O(1)"
+      ],
+      "a": 1,
+      "e": "The variable grows geometrically, so the number of multiplications is logarithmic in n.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A method makes two recursive calls on n/2 elements and then merges their results in linear time. Which recurrence models it?",
+      "o": [
+        "T(n)=2T(n/2)+O(n)",
+        "T(n)=T(n−1)+O(1)",
+        "T(n)=T(n/2)+O(1)",
+        "T(n)=2T(n−1)+O(1)"
+      ],
+      "a": 0,
+      "e": "Two half-size recursive calls plus a linear merge produce this recurrence.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which ADT property describes what operations are available without specifying their implementation?",
+      "o": [
+        "Representation invariant",
+        "Abstract data type interface",
+        "Memory address",
+        "Loop invariant"
+      ],
+      "a": 1,
+      "e": "An ADT specifies values and permitted operations while hiding implementation details.",
+      "level": "Moderate"
+    },
+    {
+      "q": "For an array-backed list, why is accessing element at index i typically O(1)?",
+      "o": [
+        "It scans earlier elements",
+        "It computes the element address from the base address and index",
+        "It sorts the array first",
+        "It follows i references"
+      ],
+      "a": 1,
+      "e": "Contiguous storage permits direct address calculation from the index.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A sorted array has 40 elements. How many elements must shift in the worst case when inserting at index 0?",
+      "o": [
+        "0",
+        "20",
+        "39",
+        "40"
+      ],
+      "a": 2,
+      "e": "All existing 40 elements? For an array of size 40, inserting at index 0 shifts 40 elements; answer should be 40.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A stack receives push(4), push(9), pop(), push(2), pop(). What value is returned by the second pop?",
+      "o": [
+        "2",
+        "9",
+        "4",
+        "Stack underflow"
+      ],
+      "a": 0,
+      "e": "After the first pop removes 9, pushing 2 makes 2 the top; the next pop returns 2.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A stack is implemented using a singly linked list with the head as top. What is the time complexity of push?",
+      "o": [
+        "O(n)",
+        "O(log n)",
+        "O(1)",
+        "O(n²)"
+      ],
+      "a": 2,
+      "e": "Insertion at the head updates a constant number of references.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A queue is implemented with a linked list that stores both front and rear references. What is enqueue complexity?",
+      "o": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n²)"
+      ],
+      "a": 0,
+      "e": "The rear reference permits direct insertion at the tail.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A circular queue has capacity 8 and uses one unused slot to distinguish full from empty. What is its maximum number of stored elements?",
+      "o": [
+        "8",
+        "7",
+        "9",
+        "4"
+      ],
+      "a": 1,
+      "e": "One slot remains unused, so usable capacity is array capacity minus one.",
+      "level": "Moderate"
+    },
+    {
+      "q": "In a circular queue of capacity m, how is the next rear index commonly calculated?",
+      "o": [
+        "rear+1",
+        "(rear+1)%m",
+        "(rear−1+m)%m",
+        "rear*m"
+      ],
+      "a": 1,
+      "e": "Modulo m wraps the index from the final array position back to zero.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A deque supports insertion and deletion at both ends. Which operation is not inherently supported by a deque?",
+      "o": [
+        "Insert at front",
+        "Delete at rear",
+        "Insert at rear",
+        "Remove the middle element in O(1)"
+      ],
+      "a": 3,
+      "e": "A deque exposes both ends; arbitrary middle removal is not a constant-time end operation.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A priority queue removes the item with the smallest key first. Which heap is a natural implementation?",
+      "o": [
+        "Max-heap",
+        "Min-heap",
+        "Binary search tree only",
+        "Stack"
+      ],
+      "a": 1,
+      "e": "A min-heap keeps the smallest key at the root for efficient minimum removal.",
+      "level": "Moderate"
+    },
+    {
+      "q": "When a binary min-heap inserts a new key, where is it initially placed?",
+      "o": [
+        "At the root",
+        "At the next available leaf position",
+        "At the leftmost internal node",
+        "At a random position"
+      ],
+      "a": 1,
+      "e": "Insertion preserves the complete-tree shape by filling the next available leaf before sifting upward.",
+      "level": "Moderate"
+    },
+    {
+      "q": "In a binary heap stored in a zero-based array, what is the right child index of node i?",
+      "o": [
+        "2i",
+        "2i+1",
+        "2i+2",
+        "(i−1)/2"
+      ],
+      "a": 2,
+      "e": "For zero-based heap indexing, left child is 2i+1 and right child is 2i+2.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A max-heap array is [50, 30, 40, 10, 20]. After removing the maximum, which value is moved to the root before heapifying?",
+      "o": [
+        "10",
+        "20",
+        "30",
+        "40"
+      ],
+      "a": 0,
+      "e": "The last element, 10, replaces the root before sift-down restores the heap property.",
+      "level": "Moderate"
+    },
+    {
+      "q": "In a singly linked list, what must be updated when inserting a node at the head?",
+      "o": [
+        "Only the new node's next and the head reference",
+        "Only the tail reference",
+        "Every node's next reference",
+        "The list must be sorted"
+      ],
+      "a": 0,
+      "e": "The new node points to the former head, then head is updated to the new node.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A singly linked list has no tail reference. What is the worst-case time to append a node?",
+      "o": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n²)"
+      ],
+      "a": 2,
+      "e": "Without a tail reference, traversal is needed to find the final node.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which advantage does a doubly linked list provide over a singly linked list?",
+      "o": [
+        "It uses no extra memory",
+        "It supports backward traversal",
+        "It guarantees O(1) search",
+        "It stores elements contiguously"
+      ],
+      "a": 1,
+      "e": "Each node has previous and next references, enabling traversal in both directions.",
+      "level": "Moderate"
+    },
+    {
+      "q": "In a circular singly linked list with at least one node, what does the last node's next reference point to?",
+      "o": [
+        "null",
+        "The previous node",
+        "The head node",
+        "A new empty node"
+      ],
+      "a": 2,
+      "e": "The last node links back to the head, forming a cycle.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A pointer/reference to node X is available in a singly linked list. Which deletion can be done in O(1) without access to the previous node, assuming X is not the tail?",
+      "o": [
+        "Delete X by copying its successor's data and bypassing successor",
+        "Delete the head only",
+        "Delete the tail",
+        "Find X from the head"
+      ],
+      "a": 0,
+      "e": "Copy the next node's data into X and bypass that next node; this cannot delete the tail this way.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which condition detects the end of a normal singly linked list traversal?",
+      "o": [
+        "current == head",
+        "current == null",
+        "current.next == head",
+        "current.data == 0"
+      ],
+      "a": 1,
+      "e": "A non-circular list terminates when the current reference becomes null.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Floyd's tortoise-and-hare algorithm is commonly used to detect what?",
+      "o": [
+        "A sorted list",
+        "A cycle in a linked list",
+        "A duplicate in a sorted array only",
+        "A balanced tree"
+      ],
+      "a": 1,
+      "e": "Two references moving at different speeds meet if a cycle exists.",
+      "level": "Moderate"
+    },
+    {
+      "q": "For a singly linked list, what is the time complexity of finding the middle using slow and fast references?",
+      "o": [
+        "O(1) time and O(1) space",
+        "O(log n) time and O(n) space",
+        "O(n) time and O(1) space",
+        "O(n²) time and O(1) space"
+      ],
+      "a": 2,
+      "e": "The fast reference advances twice as quickly, so both traverse the list in linear time with constant extra space.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which operation on a singly linked list requires a predecessor reference to unlink a known node in the usual implementation?",
+      "o": [
+        "Removing a non-head node",
+        "Reading its data",
+        "Following its next reference",
+        "Checking whether head is null"
+      ],
+      "a": 0,
+      "e": "To unlink a node, the predecessor's next reference must bypass it.",
+      "level": "Moderate"
+    },
+    {
+      "q": "What is the main structural difference between a circular linked list and a linear linked list?",
+      "o": [
+        "Circular lists have no data",
+        "The last node links back to the first node",
+        "Circular lists cannot be traversed",
+        "Every circular list is doubly linked"
+      ],
+      "a": 1,
+      "e": "A circular list connects its final node back to the first rather than ending with null.",
+      "level": "Moderate"
+    },
+    {
+      "q": "What is the result of factorial(4) when factorial(n) returns 1 for n<=1 and otherwise n*factorial(n−1)?",
+      "o": [
+        "10",
+        "16",
+        "24",
+        "120"
+      ],
+      "a": 2,
+      "e": "The calls evaluate 4×3×2×1, which equals 24.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A recursive method makes exactly one call with n−1 until n reaches zero. What is its recursion depth for input n, excluding constant framing calls?",
+      "o": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n²)"
+      ],
+      "a": 2,
+      "e": "There are linearly many nested calls before reaching the base case.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which risk is most directly associated with recursion on a very large input in Java?",
+      "o": [
+        "ArrayIndexOutOfBoundsException always",
+        "StackOverflowError",
+        "ClassCastException",
+        "ConcurrentModificationException"
+      ],
+      "a": 1,
+      "e": "Each active recursive call consumes stack space; excessive depth can exhaust the thread stack.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A recursive binary search halves the interval at each call. What is its maximum recursion depth?",
+      "o": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n log n)"
+      ],
+      "a": 1,
+      "e": "The search range is halved on every call, yielding logarithmic depth.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which change converts a recursive factorial into an accumulator-based tail-recursive form?",
+      "o": [
+        "Multiply after the recursive call returns",
+        "Pass the accumulated product into the next call",
+        "Create a new array per call",
+        "Use two recursive calls"
+      ],
+      "a": 1,
+      "e": "The accumulated result is passed as an argument so no computation remains after the recursive call.",
+      "level": "Moderate"
+    },
+    {
+      "q": "For the recurrence T(n)=T(n−1)+O(1), what is the asymptotic time complexity?",
+      "o": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n²)"
+      ],
+      "a": 2,
+      "e": "The recurrence adds constant work across n levels.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A recursive function branches into three calls of size n/2 and does O(n) extra work. Which recurrence represents it?",
+      "o": [
+        "T(n)=3T(n/2)+O(n)",
+        "T(n)=T(n−1)+O(1)",
+        "T(n)=T(n/3)+O(1)",
+        "T(n)=2T(n/2)+O(1)"
+      ],
+      "a": 0,
+      "e": "Three recursive subproblems of half size plus linear non-recursive work give this recurrence.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Why is a base case essential in a recursive algorithm?",
+      "o": [
+        "It sorts the input",
+        "It guarantees termination for valid input paths",
+        "It makes every recursion O(1)",
+        "It removes the call stack"
+      ],
+      "a": 1,
+      "e": "A reachable base case stops recursive calls and prevents unbounded recursion.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A recursive method returns f(n−1)+f(n−2) with constant base cases. What is a typical issue with its naive implementation?",
+      "o": [
+        "It always uses O(1) time",
+        "It recomputes the same subproblems many times",
+        "It cannot return integers",
+        "It uses no stack"
+      ],
+      "a": 1,
+      "e": "The recursion tree contains overlapping subproblems, causing repeated work.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which technique stores results of solved recursive subproblems to avoid recomputation?",
+      "o": [
+        "Memoization",
+        "Linear probing",
+        "Heapify",
+        "Partitioning"
+      ],
+      "a": 0,
+      "e": "Memoization caches previously computed results and reuses them when the same state recurs.",
+      "level": "Moderate"
+    },
+    {
+      "q": "In a binary tree, what is the maximum number of nodes at level L when the root is level 0?",
+      "o": [
+        "L",
+        "2L",
+        "2^L",
+        "2^(L+1)"
+      ],
+      "a": 2,
+      "e": "A binary tree can double the number of nodes at each successive level.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A full binary tree has 7 internal nodes. How many leaves does it have?",
+      "o": [
+        "6",
+        "7",
+        "8",
+        "14"
+      ],
+      "a": 2,
+      "e": "In a full binary tree, the number of leaves equals internal nodes plus one.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which traversal visits the root between the left and right subtrees?",
+      "o": [
+        "Preorder",
+        "Inorder",
+        "Postorder",
+        "Level order"
+      ],
+      "a": 1,
+      "e": "Inorder traversal follows left subtree, root, then right subtree.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which traversal is most directly implemented using a queue?",
+      "o": [
+        "Preorder",
+        "Inorder",
+        "Postorder",
+        "Level order"
+      ],
+      "a": 3,
+      "e": "Breadth-first level-order traversal uses a queue to process nodes in discovery order.",
+      "level": "Moderate"
+    },
+    {
+      "q": "What is the height of a tree consisting of only one node when height is measured in edges?",
+      "o": [
+        "0",
+        "1",
+        "−1",
+        "2"
+      ],
+      "a": 0,
+      "e": "A single-node tree has no edges on its longest root-to-leaf path.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which property defines a binary search tree with distinct keys?",
+      "o": [
+        "Every node has two children",
+        "Left subtree keys are smaller and right subtree keys are larger",
+        "All leaves are at the same level",
+        "It is always complete"
+      ],
+      "a": 1,
+      "e": "BST ordering places smaller keys in the left subtree and larger keys in the right subtree.",
+      "level": "Moderate"
+    },
+    {
+      "q": "What is the worst-case search time in a completely skewed binary search tree with n nodes?",
+      "o": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n log n)"
+      ],
+      "a": 2,
+      "e": "A skewed BST behaves like a linked list, requiring linear traversal in the worst case.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which data structure is typically used for iterative depth-first traversal of a binary tree?",
+      "o": [
+        "Queue",
+        "Stack",
+        "Priority queue",
+        "Hash table"
+      ],
+      "a": 1,
+      "e": "A stack stores pending nodes for depth-first traversal.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A BST's inorder traversal produces 2, 5, 8, 11. What can be concluded if keys are distinct?",
+      "o": [
+        "The tree contains exactly four levels",
+        "The keys are visited in sorted order",
+        "The tree is necessarily balanced",
+        "The root must be 5"
+      ],
+      "a": 1,
+      "e": "Inorder traversal of a BST visits keys in ascending order.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which tree traversal is useful for deleting a tree because children are processed before their parent?",
+      "o": [
+        "Preorder",
+        "Inorder",
+        "Postorder",
+        "Level order"
+      ],
+      "a": 2,
+      "e": "Postorder processes left and right subtrees before the current node.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Binary search is applied to a sorted array of 256 elements. Approximately how many halvings reduce the interval to one element?",
+      "o": [
+        "4",
+        "8",
+        "16",
+        "128"
+      ],
+      "a": 1,
+      "e": "Since 256=2^8, eight halvings reduce the range to one.",
+      "level": "Moderate"
+    },
+    {
+      "q": "When a sorted array contains duplicate target values, which binary-search modification finds the first occurrence?",
+      "o": [
+        "Return immediately on equality",
+        "Continue searching the left half after equality",
+        "Continue searching the right half after equality",
+        "Restart linear search"
+      ],
+      "a": 1,
+      "e": "After finding equality, save the index and continue left to locate an earlier occurrence.",
+      "level": "Moderate"
+    },
+    {
+      "q": "What is the worst-case comparison complexity of linear search in an array of n items?",
+      "o": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n²)"
+      ],
+      "a": 2,
+      "e": "The target may be absent or at the final position, requiring all n items to be examined.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which condition must hold for standard binary search on an array?",
+      "o": [
+        "Elements must be unique",
+        "Elements must be sorted according to the searched order",
+        "Array length must be a power of two",
+        "All values must be positive"
+      ],
+      "a": 1,
+      "e": "Binary search relies on sorted order to discard half of the remaining range.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A binary search uses mid=(low+high)/2 with large positive integer indices. What is a safer Java expression to avoid possible addition overflow?",
+      "o": [
+        "low + (high-low)/2",
+        "low*high/2",
+        "(low+high)*2",
+        "high-low/2"
+      ],
+      "a": 0,
+      "e": "Computing the difference first avoids overflowing the sum of two large indices.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A lower-bound search returns the first index whose value is greater than or equal to target. If no such value exists, what should it return?",
+      "o": [
+        "0",
+        "n",
+        "n−1",
+        "−1 always"
+      ],
+      "a": 1,
+      "e": "The insertion position after all n elements is n when every value is smaller than target.",
+      "level": "Moderate"
+    },
+    {
+      "q": "What does interpolation search use to estimate the likely position of a key?",
+      "o": [
+        "Only the middle index",
+        "The key's value relative to endpoint values",
+        "A heap priority",
+        "A graph degree"
+      ],
+      "a": 1,
+      "e": "Interpolation estimates a position from the target's relative value between the low and high endpoints.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which search is generally preferable for a linked list with no random access?",
+      "o": [
+        "Binary search",
+        "Interpolation search",
+        "Linear search",
+        "Jumping by array index"
+      ],
+      "a": 2,
+      "e": "A linked list cannot efficiently access a middle node by index, so sequential search is appropriate.",
+      "level": "Moderate"
+    },
+    {
+      "q": "In binary search over [low, high] inclusive, when target is greater than arr[mid], what is the next low value?",
+      "o": [
+        "mid",
+        "mid−1",
+        "mid+1",
+        "high−1"
+      ],
+      "a": 2,
+      "e": "The middle item is already known to be too small, so the remaining interval begins at mid+1.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A search algorithm checks the middle, then quarters, then eighths of the range. Which growth rate best describes the number of checks?",
+      "o": [
+        "O(n)",
+        "O(log n)",
+        "O(n²)",
+        "O(1)"
+      ],
+      "a": 1,
+      "e": "Repeatedly reducing the remaining range by a constant factor produces logarithmic search time.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which sorting algorithm repeatedly selects the minimum remaining element and places it at the next sorted position?",
+      "o": [
+        "Insertion sort",
+        "Selection sort",
+        "Merge sort",
+        "Heap sort"
+      ],
+      "a": 1,
+      "e": "Selection sort selects the smallest item from the unsorted suffix for each position.",
+      "level": "Moderate"
+    },
+    {
+      "q": "For insertion sort, what is the best-case time complexity on an already sorted array?",
+      "o": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n²)"
+      ],
+      "a": 2,
+      "e": "Each item is compared with its predecessor and no shifting is needed, producing linear time.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which sorting algorithm is stable in its standard implementation?",
+      "o": [
+        "Selection sort",
+        "Heap sort",
+        "Merge sort",
+        "In-place quicksort"
+      ],
+      "a": 2,
+      "e": "A stable merge procedure takes equal keys from the left run first, preserving their relative order.",
+      "level": "Moderate"
+    },
+    {
+      "q": "What is the worst-case time complexity of quicksort when each partition places one item on one side and n−1 on the other?",
+      "o": [
+        "O(n log n)",
+        "O(n²)",
+        "O(log n)",
+        "O(n)"
+      ],
+      "a": 1,
+      "e": "Highly unbalanced partitions produce a recursion chain with quadratic total partition work.",
+      "level": "Moderate"
+    },
+    {
+      "q": "What is the typical auxiliary space complexity of recursive merge sort on an array?",
+      "o": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n²)"
+      ],
+      "a": 2,
+      "e": "The merge process uses temporary storage proportional to the number of array elements.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which sorting algorithm has O(n log n) worst-case time and can sort an array in place with O(1) auxiliary storage?",
+      "o": [
+        "Heap sort",
+        "Insertion sort",
+        "Bubble sort",
+        "Selection sort"
+      ],
+      "a": 0,
+      "e": "Heap sort provides O(n log n) worst-case time and can be implemented in-place.",
+      "level": "Moderate"
+    },
+    {
+      "q": "In bubble sort, what does one complete left-to-right pass guarantee for ascending order?",
+      "o": [
+        "The smallest element reaches index 0",
+        "The largest unsorted element reaches its final position",
+        "The array becomes fully sorted",
+        "The median reaches the center"
+      ],
+      "a": 1,
+      "e": "Adjacent swaps move the largest element of the unsorted portion to its rightmost position.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Why does counting sort not fit the comparison-sort lower bound of Ω(n log n)?",
+      "o": [
+        "It uses recursion",
+        "It sorts by counting occurrences in a bounded key range rather than comparing pairs",
+        "It always uses a heap",
+        "It compares every pair"
+      ],
+      "a": 1,
+      "e": "Counting sort exploits integer key ranges and does not rely solely on pairwise comparisons.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A stable sort is applied to records with equal keys. What must it preserve?",
+      "o": [
+        "The records' original relative order",
+        "The records' memory addresses",
+        "The records' insertion time in the CPU",
+        "The order of unequal keys only"
+      ],
+      "a": 0,
+      "e": "Stability preserves the original relative order of records whose sort keys are equal.",
+      "level": "Moderate"
+    },
+    {
+      "q": "For an array of n elements, how many passes does standard selection sort perform in its usual form?",
+      "o": [
+        "n",
+        "n−1",
+        "log n",
+        "n²"
+      ],
+      "a": 1,
+      "e": "Each pass places one element, leaving the final element already in position after n−1 passes.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A hash table uses separate chaining. What happens when two keys hash to the same bucket?",
+      "o": [
+        "One key is discarded",
+        "Both entries are stored in that bucket's chain",
+        "The table must be sorted",
+        "The hash function changes automatically"
+      ],
+      "a": 1,
+      "e": "Separate chaining stores colliding entries together in a bucket collection such as a linked list.",
+      "level": "Moderate"
+    },
+    {
+      "q": "In open addressing, what does linear probing do after a collision?",
+      "o": [
+        "Checks the next slot in sequence",
+        "Creates a linked list",
+        "Rehashes the entire key as a string",
+        "Moves the key to the root"
+      ],
+      "a": 0,
+      "e": "Linear probing examines successive table positions until an available slot or matching key is found.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A hash table's load factor is defined as which ratio?",
+      "o": [
+        "Table capacity divided by number of entries",
+        "Number of entries divided by table capacity",
+        "Number of collisions divided by entries",
+        "Number of buckets squared"
+      ],
+      "a": 1,
+      "e": "Load factor α=n/m is the number of stored entries divided by the number of slots.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Why can deletion be tricky in an open-addressed hash table?",
+      "o": [
+        "Deleted keys cannot be integers",
+        "A cleared slot may incorrectly terminate later searches along a probe sequence",
+        "Deletion changes every key",
+        "The table becomes a tree"
+      ],
+      "a": 1,
+      "e": "A search must continue past a deleted slot; tombstones preserve the probe chain.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which property is desirable for a hash function used in a hash table?",
+      "o": [
+        "It maps every key to a unique index",
+        "It distributes expected keys uniformly across buckets",
+        "It always returns zero",
+        "It depends on insertion order"
+      ],
+      "a": 1,
+      "e": "Uniform distribution reduces collisions and helps maintain expected constant-time operations.",
+      "level": "Moderate"
+    },
+    {
+      "q": "If a hash table doubles its capacity and reinserts all entries, why must entries be rehashed?",
+      "o": [
+        "Their object identities change",
+        "Bucket positions depend on the table capacity",
+        "The keys become immutable",
+        "The load factor becomes negative"
+      ],
+      "a": 1,
+      "e": "The bucket index is typically computed using the new capacity, so old positions may no longer be valid.",
+      "level": "Moderate"
+    },
+    {
+      "q": "What is the expected search time in a well-distributed hash table with a controlled load factor?",
+      "o": [
+        "O(1)",
+        "O(log n)",
+        "O(n log n)",
+        "O(n²)"
+      ],
+      "a": 0,
+      "e": "With a suitable hash function and bounded load factor, expected lookup examines a constant number of entries.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which collision strategy stores multiple values in a collection associated with each bucket?",
+      "o": [
+        "Linear probing",
+        "Quadratic probing",
+        "Separate chaining",
+        "Double hashing"
+      ],
+      "a": 2,
+      "e": "Separate chaining keeps colliding keys in a bucket-level collection.",
+      "level": "Moderate"
+    },
+    {
+      "q": "In double hashing, how is the next probe position determined?",
+      "o": [
+        "By adding a second hash-derived step size",
+        "By always moving exactly one slot",
+        "By using a binary tree",
+        "By sorting all keys"
+      ],
+      "a": 0,
+      "e": "A second hash function supplies the probe step, reducing primary clustering.",
+      "level": "Moderate"
+    },
+    {
+      "q": "What is primary clustering associated with in open addressing?",
+      "o": [
+        "Long contiguous runs of occupied slots that attract further probes",
+        "Duplicate values in a linked list",
+        "Unbalanced BSTs",
+        "Repeated recursion"
+      ],
+      "a": 0,
+      "e": "Linear probing can form contiguous occupied runs, increasing probe lengths.",
+      "level": "Moderate"
+    },
+    {
+      "q": "In an unweighted graph, which algorithm finds shortest paths measured by number of edges from a source?",
+      "o": [
+        "Depth-first search",
+        "Breadth-first search",
+        "Dijkstra's algorithm only",
+        "Floyd-Warshall only"
+      ],
+      "a": 1,
+      "e": "BFS explores vertices level by level, so first discovery gives the minimum edge count.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which data structure is central to a standard BFS implementation?",
+      "o": [
+        "Stack",
+        "Queue",
+        "Min-heap",
+        "Hash map only"
+      ],
+      "a": 1,
+      "e": "A FIFO queue processes discovered vertices in increasing distance order.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which data structure is commonly used by iterative DFS?",
+      "o": [
+        "Queue",
+        "Stack",
+        "Circular array only",
+        "Priority queue"
+      ],
+      "a": 1,
+      "e": "DFS uses a stack, explicitly or through the call stack, to explore a path deeply.",
+      "level": "Moderate"
+    },
+    {
+      "q": "For an adjacency-list graph, what is the time complexity of BFS over all reachable vertices and edges?",
+      "o": [
+        "O(V²) always",
+        "O(V+E)",
+        "O(E log V)",
+        "O(VE)"
+      ],
+      "a": 1,
+      "e": "Each vertex is visited once and each adjacency-list edge is examined a constant number of times.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Dijkstra's algorithm is appropriate under which edge-weight condition?",
+      "o": [
+        "All edges must have negative weights",
+        "Edge weights must be non-negative",
+        "Every edge must have weight one",
+        "The graph must be a tree"
+      ],
+      "a": 1,
+      "e": "Dijkstra's greedy finalization is correct when no edge has a negative weight.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which algorithm can compute single-source shortest paths in a graph with negative edges and detect reachable negative cycles?",
+      "o": [
+        "BFS",
+        "Prim",
+        "Bellman-Ford",
+        "Kruskal"
+      ],
+      "a": 2,
+      "e": "Bellman-Ford relaxes all edges repeatedly and uses an extra pass to detect reachable negative cycles.",
+      "level": "Moderate"
+    },
+    {
+      "q": "What does Floyd-Warshall compute?",
+      "o": [
+        "A minimum spanning tree",
+        "All-pairs shortest-path distances",
+        "A topological ordering",
+        "A maximum flow"
+      ],
+      "a": 1,
+      "e": "Floyd-Warshall updates shortest distances for every ordered pair of vertices.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A directed acyclic graph is commonly abbreviated as what?",
+      "o": [
+        "MST",
+        "DAG",
+        "BST",
+        "ADT"
+      ],
+      "a": 1,
+      "e": "DAG stands for directed acyclic graph.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which algorithmic process produces a topological ordering of a DAG using indegrees and a queue?",
+      "o": [
+        "Kahn's algorithm",
+        "Kruskal's algorithm",
+        "Prim's algorithm",
+        "Rabin-Karp"
+      ],
+      "a": 0,
+      "e": "Kahn's algorithm repeatedly removes zero-indegree vertices and updates neighbouring indegrees.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A graph has V vertices and E edges. What is the space complexity of an adjacency matrix?",
+      "o": [
+        "O(V+E)",
+        "O(V²)",
+        "O(E log V)",
+        "O(V)"
+      ],
+      "a": 1,
+      "e": "An adjacency matrix reserves one cell for each possible ordered vertex pair.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which technique solves a problem by combining solutions to independent smaller subproblems?",
+      "o": [
+        "Divide and conquer",
+        "Linear probing",
+        "Greedy coloring only",
+        "Sequential scanning"
+      ],
+      "a": 0,
+      "e": "Divide and conquer divides the input, solves subproblems, and combines their results.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Merge sort is an example of which algorithm design technique?",
+      "o": [
+        "Greedy",
+        "Divide and conquer",
+        "Backtracking only",
+        "Branch and bound only"
+      ],
+      "a": 1,
+      "e": "Merge sort recursively divides the array and merges sorted halves.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Dynamic programming is especially useful when a problem has which pair of properties?",
+      "o": [
+        "Sorted input and constant memory",
+        "Overlapping subproblems and optimal substructure",
+        "Only negative numbers",
+        "A complete binary tree"
+      ],
+      "a": 1,
+      "e": "DP reuses solutions to overlapping subproblems and relies on optimal substructure.",
+      "level": "Moderate"
+    },
+    {
+      "q": "What is the main distinction between memoization and tabulation?",
+      "o": [
+        "Memoization is top-down; tabulation is bottom-up",
+        "Memoization always uses O(1) space",
+        "Tabulation requires recursion",
+        "They are unrelated to dynamic programming"
+      ],
+      "a": 0,
+      "e": "Memoization caches results during recursive evaluation, while tabulation fills a table iteratively.",
+      "level": "Moderate"
+    },
+    {
+      "q": "A greedy algorithm makes the locally best choice at each step. What must be established to guarantee global optimality?",
+      "o": [
+        "That input is sorted",
+        "A greedy-choice property and appropriate optimal substructure",
+        "That recursion depth is logarithmic",
+        "That every choice is reversible"
+      ],
+      "a": 1,
+      "e": "A proof must show that a locally optimal choice can be part of a globally optimal solution.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which technique explores candidate solutions and abandons a partial candidate when it cannot lead to a valid solution?",
+      "o": [
+        "Hashing",
+        "Backtracking",
+        "Heap construction",
+        "Binary search"
+      ],
+      "a": 1,
+      "e": "Backtracking prunes a search branch when its partial assignment violates constraints.",
+      "level": "Moderate"
+    },
+    {
+      "q": "What does amortized analysis measure?",
+      "o": [
+        "Average over random inputs only",
+        "Average cost per operation over a sequence, with a worst-case guarantee for the sequence",
+        "Exact processor time",
+        "Only memory consumption"
+      ],
+      "a": 1,
+      "e": "Amortized analysis bounds total sequence cost and spreads occasional expensive operations across operations.",
+      "level": "Moderate"
+    },
+    {
+      "q": "An operation costs O(n) occasionally but O(1) for most appends in a geometrically resizing array. What is the amortized append cost?",
+      "o": [
+        "O(n)",
+        "O(log n)",
+        "O(1)",
+        "O(n log n)"
+      ],
+      "a": 2,
+      "e": "Geometric growth makes the total copying work over n appends linear, yielding constant amortized cost.",
+      "level": "Moderate"
+    },
+    {
+      "q": "Which statement about best-case and worst-case complexity is correct?",
+      "o": [
+        "They must always be equal",
+        "Worst case considers the most expensive input of a given size",
+        "Best case is the average of all inputs",
+        "Worst case depends only on programming language"
+      ],
+      "a": 1,
+      "e": "Worst-case analysis bounds the maximum cost among inputs of a specified size.",
+      "level": "Moderate"
+    },
+    {
+      "q": "An algorithm uses a constant number of variables and no input-sized auxiliary structure. What is its auxiliary space complexity?",
+      "o": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n²)"
+      ],
+      "a": 0,
+      "e": "A fixed amount of extra storage does not grow with input size.",
+      "level": "Moderate"
+    }
+  ]
+}
