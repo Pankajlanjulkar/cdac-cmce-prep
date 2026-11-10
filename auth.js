@@ -230,6 +230,11 @@ document.addEventListener("click",async event=>{
   if(!currentSession?.user){openAuth("login");return;}
   const selection=window.getCMCESelection?.();if(!selection){alert("Please select a course module first.");return;}
   try{
+    // Before showing the paywall, ask the server to reconcile any earlier
+    // Razorpay payment for this account that is still marked pending.
+    const {data:recovery,error:recoveryError}=await supabase.functions.invoke("verify-razorpay-payment",{body:{action:"recover_pending"}});
+    if(recoveryError)console.warn("Could not recover pending premium purchases:",recoveryError.message);
+    else if(recovery?.recovered>0)console.info(recovery.message);
     if(await hasPremiumAccess(selection)){target.click();return;}
     window.__pendingPremiumAction=target;const d=ensurePaymentDialog();
     $("paymentSelectionText").textContent=selection.course_name+" · "+selection.module_name+". Choose module-only access or unlock every module in this course.";
