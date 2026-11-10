@@ -110,7 +110,8 @@ $("authForm").addEventListener("submit",async event=>{
 function syncAuthUI(session) {
   currentSession=session||null;authButton.textContent=currentSession?.user?"Logout":"Student Login";
   authButton.title=currentSession?.user?.email||"Student account";
-  document.documentElement.dataset.studentSignedIn=currentSession?.user?"true":"false";\n  profileButton.hidden = !currentSession?.user;
+  document.documentElement.dataset.studentSignedIn=currentSession?.user?"true":"false";
+  profileButton.hidden = !currentSession?.user;
 }
 
 function profileNotice(message, error = false) {
