@@ -19,6 +19,11 @@ const bdaPythonRPremiumHardQs=[{"q":"What is the output of the following Python 
     return originalStart.apply(this, arguments);
   };
   document.addEventListener("click", function(event){
+    if(event.target && event.target.id === "openCppPremium" && selectedCourse && selectedCourse.code === "PGCP-BDA" && selectedModuleIndex === 1){
+      event.preventDefault(); event.stopImmediatePropagation(); window.startCppPremium();
+    }
+  }, true);
+  document.addEventListener("click", function(event){
     if(event.target.closest && event.target.closest(".module-open-btn")){
       setTimeout(function(){
         if(selectedCourse && selectedCourse.code === "PGCP-BDA" && selectedModuleIndex === 1){
