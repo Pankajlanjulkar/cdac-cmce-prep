@@ -802,6 +802,10 @@ document.getElementById("goPreview").addEventListener("click",()=>{openWorkspace
 document.getElementById("goPremium").addEventListener("click",()=>openWorkspacePage("premiumPage"));
 document.getElementById("openPremiumBankSection").addEventListener("click",()=>{document.getElementById("premiumHub").hidden=true;document.getElementById("premiumBankSection").hidden=false;document.getElementById("premiumMockTests").hidden=true;document.getElementById("premiumMockPanel").hidden=true;document.getElementById("premiumMockResult").hidden=true;});
 document.getElementById("openPremiumMocksSection").addEventListener("click",()=>{document.getElementById("premiumHub").hidden=true;document.getElementById("premiumBankSection").hidden=true;document.getElementById("premiumMockTests").hidden=false;document.getElementById("premiumPracticePanel").hidden=true;document.getElementById("premiumUnavailable").hidden=true;});
+function returnToPremiumHub(){document.getElementById("premiumHub").hidden=false;document.getElementById("premiumBankSection").hidden=true;document.getElementById("premiumMockTests").hidden=true;document.getElementById("premiumPracticePanel").hidden=true;document.getElementById("premiumMockPanel").hidden=true;document.getElementById("premiumMockResult").hidden=true;}
+document.getElementById("backToPremiumHubFromBank").addEventListener("click",returnToPremiumHub);
+document.getElementById("backToPremiumHubFromMocks").addEventListener("click",returnToPremiumHub);
+
 
 document.getElementById("goTest").addEventListener("click",()=>openWorkspacePage("testPage"));
 document.querySelectorAll(".backWorkspace").forEach(b=>b.addEventListener("click",()=>openWorkspacePage("workspaceHome")));
