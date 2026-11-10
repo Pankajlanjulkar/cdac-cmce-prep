@@ -43,7 +43,10 @@ let mode = "login";
 let busy = false;
 
 function notice(message, error = false) {
-  $("authNotice").innerHTML = message ? `<div class="auth-message ${error ? "error" : ""}">${message}</div>` : "";
+  const box = document.createElement("div");
+  box.className = "auth-message" + (error ? " error" : "");
+  box.textContent = message || "";
+  $("authNotice").replaceChildren(...(message ? [box] : []));
 }
 function setMode(next) {
   mode = next;
