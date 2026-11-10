@@ -244,16 +244,14 @@ async function startPurchaseFromPlans(accessType){
   }
   const selection=window.getCMCESelection?.();
   if(!selection){
-    // Open the existing course picker instead of sending the student away.
-    // The purchase intent is retained and checkout resumes once a module is selected.
-    showPlansPurchaseMessage("Choose a programme and module in the selector to continue directly to secure checkout.");
-    const firstCourseButton=document.querySelector("#courseGrid .course button");
-    if(firstCourseButton){
-      window.__pendingPlansPurchaseAfterSelection=accessType;
-      firstCourseButton.click();
-    }else{
-      showPlansPurchaseMessage("Course list is still loading. Please wait a moment and try again.");
-    }
+    // Keep the requested purchase type, but let the student choose any programme.
+    // The existing course cards and module picker remain the source of truth.
+    window.__pendingPlansPurchaseAfterSelection=accessType;
+    showPlansPurchaseMessage(accessType==="course"
+      ? "Choose the programme you want to unlock below, then select any module in that programme to confirm your choice. The ₹40 course purchase will unlock the whole programme."
+      : "Choose a programme below, then select the exact module you want to unlock for ₹10.");
+    const courseSection=$("courses");
+    courseSection?.scrollIntoView({behavior:"smooth",block:"start"});
     return;
   }
   const d=ensurePaymentDialog();
