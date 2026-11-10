@@ -6,14 +6,14 @@ const bdaPythonRPremiumHardQs=[{"q":"What is the output of the following Python 
 (function(){
   const originalStart = window.startCppPremium;
   window.startCppPremium = function(){
-    if(window.selectedCourse && window.selectedCourse.code === "PGCP-BDA" && window.selectedModuleIndex === 1){
+    if(selectedCourse && selectedCourse.code === "PGCP-BDA" && selectedModuleIndex === 1){
       const level = document.getElementById("cppPremiumLevel").value;
-      window.premiumQs = level === "easy" ? bdaPythonRPremiumEasyQs : level === "moderate" ? bdaPythonRPremiumModerateQs : bdaPythonRPremiumHardQs;
-      if(window.premiumQs.length !== 100){ alert("This bank is not ready."); return; }
-      window.premiumIndex = 0; window.premiumAnswers = {};
+      premiumQs = level === "easy" ? bdaPythonRPremiumEasyQs : level === "moderate" ? bdaPythonRPremiumModerateQs : bdaPythonRPremiumHardQs;
+      if(premiumQs.length !== 100){ alert("This bank is not ready."); return; }
+      premiumIndex = 0; premiumAnswers = {};
       document.getElementById("premiumUnavailable").hidden = true;
       document.getElementById("premiumPracticePanel").hidden = false;
-      window.renderPremium();
+      renderPremium();
       return;
     }
     return originalStart.apply(this, arguments);
@@ -21,7 +21,7 @@ const bdaPythonRPremiumHardQs=[{"q":"What is the output of the following Python 
   document.addEventListener("click", function(event){
     if(event.target.closest && event.target.closest(".module-open-btn")){
       setTimeout(function(){
-        if(window.selectedCourse && window.selectedCourse.code === "PGCP-BDA" && window.selectedModuleIndex === 1){
+        if(selectedCourse && selectedCourse.code === "PGCP-BDA" && selectedModuleIndex === 1){
           document.getElementById("cppPremiumControls").hidden = false;
           document.getElementById("premiumUnavailable").hidden = true;
         }
