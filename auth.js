@@ -235,7 +235,7 @@ document.addEventListener("click",async event=>{
     const {data:recovery,error:recoveryError}=await supabase.functions.invoke("verify-razorpay-payment",{body:{action:"recover_pending"}});
     if(recoveryError)console.warn("Could not recover pending premium purchases:",recoveryError.message);
     else if(recovery?.recovered>0)console.info(recovery.message);
-    if(await hasPremiumAccess(selection)){target.click();return;}
+    if(await hasPremiumAccess(selection)){replayPremiumClick=true;target.click();return;}
     window.__pendingPremiumAction=target;const d=ensurePaymentDialog();
     $("paymentSelectionText").textContent=selection.course_name+" · "+selection.module_name+". Choose module-only access or unlock every module in this course.";
     paymentNotice("Premium access is required to continue.");if(!d.open)d.showModal();
