@@ -4,13 +4,13 @@
   let syncHandle = null;
 
   function openPremiumExamWindow() {
-    if (examWindow && !examWindow.closed) {
+    if (examWindow && !examWindow.closed && examWindow.document.getElementById("mockWindowContent")) {
       examWindow.focus();
       return;
     }
-
-    // Open synchronously inside the student's click so popup blockers allow it.
-    examWindow = window.open("", "cmcePremiumMockExam", "popup=yes,width=1280,height=900,resizable=yes,scrollbars=yes");
+    if (!examWindow || examWindow.closed) {
+      examWindow = window.open("", "cmcePremiumMockExam", "popup=yes,width=1280,height=900,resizable=yes,scrollbars=yes");
+    }
     if (!examWindow) {
       alert("Your browser blocked the exam window. Allow pop-ups for this site and click Start mock test again.");
       return;
@@ -120,12 +120,20 @@
 
   // Capture before the original Start button handler. The existing exam logic
   // still runs unchanged, but its interface is mirrored into a separate window.
+  function preparePremiumExamWindow() {
+    if (examWindow && !examWindow.closed) { examWindow.focus(); return; }
+    examWindow = window.open("", "cmcePremiumMockExam", "popup=yes,width=1280,height=900,resizable=yes,scrollbars=yes");
+    if (!examWindow) { alert("Your browser blocked the exam window. Allow pop-ups for this site and try again."); return; }
+    examWindow.document.open();
+    examWindow.document.write('<!doctype html><html><head><title>CDAC Premium Mock Test</title><style>body{font:16px Arial,sans-serif;background:#f4f7f7;color:#263b3b;padding:32px}main{max-width:760px;margin:10vh auto;background:#fff;padding:28px;border:1px solid #dce5e3;border-radius:14px}</style></head><body><main><h2>Checking premium access…</h2><p>Complete sign-in and purchase in the original application tab to start this test.</p></main></body></html>');
+    examWindow.document.close();
+  }
   document.addEventListener("click", event => {
     const button = event.target instanceof Element ? event.target.closest("#startPremiumMock") : null;
     if (!button) return;
     event.preventDefault();
-    event.stopImmediatePropagation();
-    openPremiumExamWindow();
+    if (window.__hasPremiumAccessGrant?.()) openPremiumExamWindow();
+    else preparePremiumExamWindow();
   }, true);
 
   let mocksWindow = null;
@@ -220,8 +228,10 @@
   }
 
   function openPremiumMocksWindow() {
-    if (mocksWindow && !mocksWindow.closed) { mocksWindow.focus(); return; }
-    mocksWindow = window.open("", "cmcePremiumMocks", "popup=yes,width=1280,height=900,resizable=yes,scrollbars=yes");
+    if (mocksWindow && !mocksWindow.closed && mocksWindow.document.getElementById("mockWindowContent")) { mocksWindow.focus(); return; }
+    if (!mocksWindow || mocksWindow.closed) {
+      mocksWindow = window.open("", "cmcePremiumMocks", "popup=yes,width=1280,height=900,resizable=yes,scrollbars=yes");
+    }
     if (!mocksWindow) {
       alert("Your browser blocked the new window. Allow pop-ups for this site and click Open Mock Tests again.");
       return;
