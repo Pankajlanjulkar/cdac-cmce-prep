@@ -120,6 +120,49 @@ $("authForm").addEventListener("submit",async event=>{
   finally{busy=false;$("authSubmit").disabled=false;}
 });
 
+
+
+// One active device per student account. A newer login replaces the previous device.
+const DEVICE_STORAGE_KEY = "cdac_cmce_device_id";
+let thisDeviceId = localStorage.getItem(DEVICE_STORAGE_KEY);
+if (!thisDeviceId) {
+  thisDeviceId = crypto.randomUUID();
+  localStorage.setItem(DEVICE_STORAGE_KEY, thisDeviceId);
+}
+let deviceCheckTimer = null;
+let deviceSessionBlocked = false;
+
+async function claimThisDevice(session) {
+  if (!session?.user || deviceSessionBlocked) return;
+  const { data, error } = await supabase.rpc("claim_student_device", { p_device_id: thisDeviceId });
+  if (error || data !== true) {
+    console.error("Device-session claim failed:", error?.message || "Claim rejected");
+    deviceSessionBlocked = true;
+    await supabase.auth.signOut({ scope: "local" });
+    openAuth("login");
+    notice(error ? "Secure device login is not configured yet. Please contact support." : "This account could not claim this device.", true);
+    return;
+  }
+  startDeviceSessionChecks();
+}
+
+function startDeviceSessionChecks() {
+  if (deviceCheckTimer) clearInterval(deviceCheckTimer);
+  deviceCheckTimer = setInterval(async () => {
+    if (!currentSession?.user || deviceSessionBlocked) return;
+    const { data, error } = await supabase.rpc("check_student_device", { p_device_id: thisDeviceId });
+    if (error) { console.warn("Device session check failed:", error.message); return; }
+    if (data !== true) {
+      deviceSessionBlocked = true;
+      clearInterval(deviceCheckTimer);
+      deviceCheckTimer = null;
+      await supabase.auth.signOut({ scope: "local" });
+      openAuth("login");
+      notice("You were logged out because this account was signed in on another device.", true);
+    }
+  }, 15000);
+}
+
 function syncAuthUI(session) {
   currentSession=session||null;authButton.textContent=currentSession?.user?"Logout":"Student Login";
   authButton.title=currentSession?.user?.email||"Student account";
@@ -366,11 +409,13 @@ document.addEventListener("click",async event=>{
     paymentNotice("Premium access is required to continue.");if(!d.open)d.showModal();
   }catch(error){alert("Could not check premium access: "+(error.message||"Please try again."));}
 },true);
-supabase.auth.onAuthStateChange((_event,session)=>{
+supabase.auth.onAuthStateChange(async (event,session)=>{
   syncAuthUI(session);
+  if(event==="SIGNED_IN" && session?.user) await claimThisDevice(session);
+  if(event==="SIGNED_OUT") { if(deviceCheckTimer)clearInterval(deviceCheckTimer); deviceCheckTimer=null; deviceSessionBlocked=false; }
   if(session?.user&&pendingPlansPurchase){
     const requested=pendingPlansPurchase;
     setTimeout(()=>startPurchaseFromPlans(requested),0);
   }
 });
-const {data:{session}}=await supabase.auth.getSession();syncAuthUI(session);
+const {data:{session}}=await supabase.auth.getSession();syncAuthUI(session);if(session?.user)await claimThisDevice(session);
