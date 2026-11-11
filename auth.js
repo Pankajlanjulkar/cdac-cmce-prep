@@ -22,7 +22,7 @@ dialog.innerHTML = `
     <label id="authNameWrap" hidden>Full name<input id="authName" autocomplete="name" maxlength="100"></label>
     <label>Email address<input id="authEmail" type="email" autocomplete="email" required></label>
     <label>Password<input id="authPassword" type="password" autocomplete="current-password" minlength="8" required></label>
-    <div class="auth-actions"><button class="btn" id="authSubmit" type="submit">Login</button><button class="btn secondary" id="authMode" type="button">Create account</button></div>
+    <div class="auth-actions"><button class="btn" id="authSubmit" type="submit">Login</button></div>
   </form>
   <div class="auth-divider" id="authGoogleDivider">OR</div><button class="btn secondary auth-google" id="authGoogle" type="button"><span aria-hidden="true" style="font-weight:800;font-size:18px">G</span> Continue with Google</button>
   <button class="auth-link" id="authForgot" type="button">Forgot password?</button><button class="auth-link" id="authBack" type="button" hidden>Back to login</button>
@@ -80,14 +80,18 @@ function notice(message, error = false) {
   $("authNotice").replaceChildren(...(message ? [box] : []));
 }
 function setMode(next) {
-  mode = next;$("authNotice").replaceChildren();
-  $("authHeading").textContent = mode === "signup" ? "Create student account" : mode === "reset" ? "Reset password" : "Student login";
-  $("authIntro").textContent = mode === "signup" ? "Register with your name and email. Verify your email to activate your account." : mode === "reset" ? "Enter your registered email to receive a password reset link." : "Sign in to access premium learning and mock tests.";
-  $("authNameWrap").hidden = mode !== "signup";$("authPassword").hidden = mode === "reset";$("authPassword").required = mode !== "reset";
-  $("authSubmit").textContent = mode === "signup" ? "Create account" : mode === "reset" ? "Send reset link" : "Login";
-  $("authMode").hidden = mode === "reset";$("authMode").textContent = mode === "login" ? "Create account" : "I already have an account";
-  $("authForgot").hidden = mode !== "login";$("authBack").hidden = mode !== "reset";
-  $("authGoogle").hidden = mode === "reset";$("authGoogleDivider").hidden = mode === "reset";
+  mode = next === "reset" ? "reset" : "login";
+  $("authNotice").replaceChildren();
+  $("authHeading").textContent = mode === "reset" ? "Reset password" : "Student login";
+  $("authIntro").textContent = mode === "reset" ? "Enter your registered email to receive a password reset link." : "Sign in with Google or use your existing email and password account.";
+  $("authNameWrap").hidden = true;
+  $("authPassword").hidden = mode === "reset";
+  $("authPassword").required = mode !== "reset";
+  $("authSubmit").textContent = mode === "reset" ? "Send reset link" : "Login";
+  $("authForgot").hidden = mode !== "login";
+  $("authBack").hidden = mode !== "reset";
+  $("authGoogle").hidden = mode === "reset";
+  $("authGoogleDivider").hidden = mode === "reset";
 }
 function openAuth(next = "login") { setMode(next);if(!dialog.open) dialog.showModal(); }
 
@@ -99,7 +103,6 @@ authButton.addEventListener("click", async () => {
   } else openAuth("login");
 });
 $("authClose").addEventListener("click",()=>dialog.close());
-$("authMode").addEventListener("click",()=>setMode(mode === "login" ? "signup" : "login"));
 $("authForgot").addEventListener("click",()=>setMode("reset"));
 $("authBack").addEventListener("click",()=>setMode("login"));
 $("authGoogle").addEventListener("click", async () => {
@@ -124,12 +127,7 @@ $("authForm").addEventListener("submit",async event=>{
   event.preventDefault();if(busy)return;busy=true;$("authSubmit").disabled=true;notice("");
   const email=$("authEmail").value.trim(),password=$("authPassword").value;
   try {
-    if(mode==="signup") {
-      const fullName=$("authName").value.trim();if(!fullName)throw new Error("Please enter your full name.");
-      const {data,error}=await supabase.auth.signUp({email,password,options:{data:{full_name:fullName}}});
-      if(error)throw error;
-      if(data.session){dialog.close();}else notice("Registration successful. Check your email and verify your account before logging in.");
-    } else if(mode==="reset") {
+    if(mode==="reset") {
       const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});
       if(error)throw error;notice("If an account exists for this email, a password reset link has been sent.");
     } else {
