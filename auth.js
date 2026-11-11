@@ -34,10 +34,10 @@ const authButton = document.createElement("button");
 authButton.className = "btn secondary auth-trigger";
 authButton.type = "button";authButton.id = "studentAuthButton";authButton.textContent = "Student Login";
 nav?.append(authButton);
-const profileButton = document.createElement("button");
+const profileButton = document.createElement("a");
 profileButton.className = "btn secondary auth-trigger";
-profileButton.type = "button";
 profileButton.id = "studentProfileButton";
+profileButton.href = "/profile";
 profileButton.textContent = "My Profile";
 profileButton.hidden = true;
 nav?.append(profileButton);
@@ -95,13 +95,7 @@ function setMode(next) {
 }
 function openAuth(next = "login") { setMode(next);if(!dialog.open) dialog.showModal(); }
 
-authButton.addEventListener("click", async () => {
-  if (currentSession?.user) {
-    const {error} = await supabase.auth.signOut();
-    if (error) {openAuth("login");notice(error.message,true);}
-    else {openAuth("login");notice("You have been logged out.");}
-  } else openAuth("login");
-});
+authButton.addEventListener("click", () => openAuth("login"));
 $("authClose").addEventListener("click",()=>dialog.close());
 $("authForgot").addEventListener("click",()=>setMode("reset"));
 $("authBack").addEventListener("click",()=>setMode("login"));
@@ -186,8 +180,10 @@ function startDeviceSessionChecks() {
 }
 
 function syncAuthUI(session) {
-  currentSession=session||null;authButton.textContent=currentSession?.user?"Logout":"Student Login";
-  authButton.title=currentSession?.user?.email||"Student account";
+  currentSession=session||null;
+  authButton.textContent="Student Login";
+  authButton.title="Student account";
+  authButton.hidden=!!currentSession?.user;
   document.documentElement.dataset.studentSignedIn=currentSession?.user?"true":"false";
   profileButton.hidden = !currentSession?.user;
 }
@@ -212,7 +208,7 @@ async function openStudentProfile() {
   }
   if (data) $("profileName").value = data.full_name || $("profileName").value;
 }
-profileButton.addEventListener("click", openStudentProfile);
+// Profile is a dedicated /profile page; keep the legacy dialog handler unused.
 $("profileClose").addEventListener("click", () => profileDialog.close());
 $("profileForm").addEventListener("submit", async event => {
   event.preventDefault();
@@ -238,6 +234,120 @@ $("profileForm").addEventListener("submit", async event => {
   }
 });
 
+
+
+const isStudentProfileRoute = window.location.pathname.replace(/\\/$/,"")==="/profile";
+if(isStudentProfileRoute){
+  document.body.classList.add("student-profile-route");
+  const profilePage=document.createElement("main");
+  profilePage.id="studentProfilePage";
+  profilePage.innerHTML=`
+    <section class="student-profile-shell">
+      <a class="student-profile-back" href="/">← Back to courses</a>
+      <header class="student-profile-heading"><div class="eyebrow">STUDENT ACCOUNT</div><h1>My Profile</h1><p>Manage your personal details and view your purchased access.</p></header>
+      <div id="studentProfilePageNotice" aria-live="polite"></div>
+      <section class="student-profile-card"><h2>Personal details</h2>
+        <form id="studentProfilePageForm">
+          <label>Full name<input id="studentProfilePageName" autocomplete="name" maxlength="100" required></label>
+          <label>Email address<input id="studentProfilePageEmail" type="email" disabled></label>
+          <button class="btn" id="studentProfilePageSave" type="submit">Save details</button>
+        </form>
+      </section>
+      <section class="student-profile-card"><h2>Purchased courses & modules</h2><p class="student-profile-muted">Your active premium access is listed below.</p><div id="studentPurchasedAccess"><p>Loading purchases…</p></div></section>
+      <section class="student-profile-footer"><button class="btn secondary" id="studentProfileLogout" type="button">Logout</button></section>
+    </section>`;
+  const existingMain=document.querySelector("body > main");
+  existingMain?.before(profilePage);
+  const style=document.createElement("style");
+  style.textContent=`
+    body.student-profile-route{background:#f3f7f7}
+    body.student-profile-route>main:not(#studentProfilePage){display:none!important}
+    body.student-profile-route .navlinks>a[href="#courses"],body.student-profile-route .navlinks>a[href="#plans"],body.student-profile-route .navlinks>a[href="#how"]{display:none}
+    .student-profile-shell{max-width:960px;margin:42px auto;padding:0 22px 60px}
+    .student-profile-back{display:inline-block;color:#126b70;text-decoration:none;font-weight:700;margin-bottom:24px}
+    .student-profile-heading h1{font-size:clamp(30px,5vw,42px);margin:8px 0}
+    .student-profile-heading p,.student-profile-muted{color:#6c7c83}
+    .student-profile-card{background:#fff;border:1px solid #dce5e5;border-radius:16px;padding:24px;margin-top:20px;box-shadow:0 5px 18px rgba(20,40,45,.04)}
+    .student-profile-card h2{font-size:20px;margin:0 0 18px}
+    #studentProfilePageForm{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    #studentProfilePageForm label{display:grid;gap:7px;font-weight:600}
+    #studentProfilePageForm input{padding:12px;border:1px solid #cfdada;border-radius:9px;font:inherit;min-width:0}
+    #studentProfilePageForm button{justify-self:start;grid-column:1/-1}
+    .student-access-list{display:grid;gap:12px}
+    .student-access-item{padding:15px;border:1px solid #e0e8e8;border-radius:12px}
+    .student-access-item strong{display:block;margin-bottom:5px}
+    .student-access-item span{color:#62747a;font-size:14px}
+    .student-profile-footer{display:flex;justify-content:flex-end;margin-top:22px}
+    .student-profile-message{padding:12px 14px;background:#eaf6f0;border:1px solid #b8dfca;border-radius:10px;margin-top:12px}
+    .student-profile-message.error{background:#fff1f0;border-color:#f0c2be}
+    @media(max-width:650px){#studentProfilePageForm{grid-template-columns:1fr}.student-profile-shell{margin-top:24px;padding:0 14px 40px}.student-profile-card{padding:18px}}
+  `;
+  document.head.append(style);
+}
+function profilePageMessage(message,error=false){
+  const box=document.getElementById("studentProfilePageNotice");if(!box)return;
+  box.innerHTML=message?`<div class="student-profile-message${error?" error":""}">${message.replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]))}</div>`:"";
+}
+const profileCourseModules={
+ "PGCP-AC":["C++ Programming","Object-Oriented Programming with Java","Algorithms and Data Structures with Java","Database Technologies","Web Programming Technologies"],
+ "PGCP-MC":["OS Concepts and Linux Programming","Introduction to DBMS","Object-Oriented Programming with Java","Algorithms and Data Structures using Java","Web-based Java Programming"],
+ "PGCP-VLSI":["Advanced Digital Design","System Architecture","Linux Shell Scripting & Python","Verilog HDL","HDL Simulation & Synthesis"],
+ "PGCP-ESD":["Embedded C Programming","Data Structures and Algorithms","Microcontroller Programming and Interfacing","Embedded Operating Systems"],
+ "PGCP-BDA":["Linux Programming and Cloud Computing & Data Collection and DBMS","Python & R Programming","Java Programming","Big Data Technologies"]
+};
+const profileCourseNames={"PGCP-AC":"Advanced Computing","PGCP-MC":"Mobile Computing","PGCP-VLSI":"VLSI Design","PGCP-ESD":"Embedded Systems Design","PGCP-BDA":"Big Data Analytics"};
+async function loadStudentProfilePage(){
+ if(!isStudentProfileRoute)return;
+ if(!currentSession?.user){document.getElementById("studentPurchasedAccess").innerHTML="<p>Please sign in to view your profile and purchases.</p>";openAuth("login");return;}
+ const user=currentSession.user;
+ const nameInput=document.getElementById("studentProfilePageName"),emailInput=document.getElementById("studentProfilePageEmail");
+ nameInput.value=user.user_metadata?.full_name||"";emailInput.value=user.email||"";
+ const [{data:profile,error:profileError},{data:purchases,error:purchaseError}]=await Promise.all([
+  supabase.from("student_profiles").select("full_name,email").eq("id",user.id).maybeSingle(),
+  supabase.from("student_purchases").select("course_code,access_type,module_index,status,created_at").eq("student_id",user.id).eq("status","active").order("created_at",{ascending:false})
+ ]);
+ if(profileError)profilePageMessage("Could not load personal details: "+profileError.message,true);
+ else if(profile?.full_name)nameInput.value=profile.full_name;
+ const host=document.getElementById("studentPurchasedAccess");
+ if(purchaseError){host.textContent="Could not load purchased access. Please refresh the page.";profilePageMessage(purchaseError.message,true);}
+ else{
+  const active=purchases||[];
+  if(!active.length)host.innerHTML="<p>No active purchases found yet.</p>";
+  else{
+   const grouped=new Map();
+   active.forEach(p=>{if(!grouped.has(p.course_code))grouped.set(p.course_code,[]);grouped.get(p.course_code).push(p);});
+   host.replaceChildren();
+   const list=document.createElement("div");list.className="student-access-list";
+   grouped.forEach((items,code)=>{
+    const course=document.createElement("article");course.className="student-access-item";
+    const title=document.createElement("strong");title.textContent=profileCourseNames[code]||code;course.append(title);
+    const courseAccess=items.some(p=>p.access_type==="course");
+    const detail=document.createElement("span");
+    detail.textContent=courseAccess?"Complete course access · All modules unlocked":items.map(p=>{const n=Number(p.module_index);return (profileCourseModules[code]||[])[n]||("Module "+(n+1));}).join(" · ");
+    course.append(detail);list.append(course);
+   });
+   host.append(list);
+  }
+ }
+}
+if(isStudentProfileRoute){
+ document.getElementById("studentProfilePageForm").addEventListener("submit",async event=>{
+  event.preventDefault();if(!currentSession?.user){openAuth("login");return;}
+  const fullName=document.getElementById("studentProfilePageName").value.trim();if(!fullName){profilePageMessage("Please enter your full name.",true);return;}
+  const button=document.getElementById("studentProfilePageSave");button.disabled=true;
+  try{
+   const {error}=await supabase.from("student_profiles").upsert({id:currentSession.user.id,full_name:fullName,email:currentSession.user.email,updated_at:new Date().toISOString()},{onConflict:"id"});
+   if(error)throw error;
+   const {error:metaError}=await supabase.auth.updateUser({data:{full_name:fullName}});if(metaError)throw metaError;
+   profilePageMessage("Your personal details have been saved.");
+  }catch(error){profilePageMessage(error.message||"Could not save details.",true);}
+  finally{button.disabled=false;}
+ });
+ document.getElementById("studentProfileLogout").addEventListener("click",async()=>{
+  const button=document.getElementById("studentProfileLogout");button.disabled=true;
+  const {error}=await supabase.auth.signOut();if(error){profilePageMessage(error.message,true);button.disabled=false;}else window.location.assign("/");
+ });
+}
 
 const premiumEntrySelectors=["#openPremiumBankSection","#openPremiumMocksSection","#openCppPremium","#startPremiumMock"].join(",");
 let paymentBusy=false,replayPremiumClick=false,courseDialogSuspendedForCheckout=false;
@@ -434,10 +544,11 @@ document.addEventListener("click",async event=>{
 supabase.auth.onAuthStateChange(async (event,session)=>{
   syncAuthUI(session);
   if(event==="SIGNED_IN" && session?.user) await claimThisDevice(session);
+  if(isStudentProfileRoute && session?.user) await loadStudentProfilePage();
   if(event==="SIGNED_OUT") { if(deviceCheckTimer)clearInterval(deviceCheckTimer); deviceCheckTimer=null; deviceSessionBlocked=false; }
   if(session?.user&&pendingPlansPurchase){
     const requested=pendingPlansPurchase;
     setTimeout(()=>startPurchaseFromPlans(requested),0);
   }
 });
-const {data:{session}}=await supabase.auth.getSession();syncAuthUI(session);if(session?.user)await claimThisDevice(session);
+const {data:{session}}=await supabase.auth.getSession();syncAuthUI(session);if(session?.user)await claimThisDevice(session);if(isStudentProfileRoute)await loadStudentProfilePage();
