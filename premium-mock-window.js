@@ -17,13 +17,14 @@
     }
 
     const doc = examWindow.document;
+    const inlineStyles = Array.from(document.querySelectorAll("style")).map(style => style.textContent).join("\\n");
     const stylesheetLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
       .map(link => '<link rel="stylesheet" href="' + link.href.replace(/&/g, "&amp;").replace(/"/g, "&quot;") + '">')
       .join("");
 
     doc.open();
     doc.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CDAC Premium Mock Test</title>${stylesheetLinks}
-      <style>
+      <style>${inlineStyles}</style><style>
         body{margin:0;padding:18px;background:#f4f7f7;color:#172b2a}
         .mock-window-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:10;background:#fff;padding:12px 16px;border:1px solid #dce5e3;border-radius:12px;margin-bottom:16px}
         .mock-window-actions{display:flex;gap:8px;flex-wrap:wrap}
