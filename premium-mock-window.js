@@ -70,6 +70,15 @@
     const host = examWindow.document.getElementById("mockWindowContent");
     if (!host) return;
 
+    // Timer text changes via textContent, which does not alter innerHTML.
+    // Mirror it explicitly so the popup countdown visibly advances every second.
+    const sourceTimer = document.getElementById("premiumMockTimer");
+    const popupTimer = examWindow.document.getElementById("premiumMockTimer");
+    if (sourceTimer && popupTimer) {
+      popupTimer.textContent = sourceTimer.textContent;
+      popupTimer.style.color = sourceTimer.style.color;
+    }
+
     const sourceIds = ["premiumMockPanel", "premiumMockResult"];
     sourceIds.forEach(id => {
       const source = document.getElementById(id);
