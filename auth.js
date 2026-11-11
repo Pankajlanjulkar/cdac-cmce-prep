@@ -135,12 +135,17 @@ let deviceSessionBlocked = false;
 async function claimThisDevice(session) {
   if (!session?.user || deviceSessionBlocked) return;
   const { data, error } = await supabase.rpc("claim_student_device", { p_device_id: thisDeviceId });
-  if (error || data !== true) {
-    console.error("Device-session claim failed:", error?.message || "Claim rejected");
+  if (error) {
+    // Keep sign-in available while the database setup is pending; do not lock out students.
+    console.error("Device-session setup is not ready:", error.message);
+    notice("Device limit setup is pending. Please try again shortly.", true);
+    return;
+  }
+  if (data !== true) {
     deviceSessionBlocked = true;
     await supabase.auth.signOut({ scope: "local" });
     openAuth("login");
-    notice(error ? "Secure device login is not configured yet. Please contact support." : "This account could not claim this device.", true);
+    notice("This account could not claim this device.", true);
     return;
   }
   startDeviceSessionChecks();
