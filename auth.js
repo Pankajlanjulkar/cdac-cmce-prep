@@ -282,7 +282,7 @@ async function startRazorpayPurchase(accessType){
   try{
     await ensureRazorpayScript();
     const {data:orderData,error:orderError}=await supabase.functions.invoke("create-razorpay-order",{body:{course_code:selection.course_code,access_type:accessType,module_index:accessType==="module"?selection.module_index:null}});
-    if(orderError)throw new Error(orderError.message||"Could not create payment order.");if(!orderData?.order_id||!orderData?.key_id)throw new Error(orderData?.error||"Payment order response is incomplete.");
+    if(orderError){let detail=orderError.message||"Could not create payment order.";try{const response=orderError.context;if(response&&typeof response.clone==="function"){const payload=await response.clone().json();if(payload?.error)detail=payload.error;}}catch{}throw new Error(detail);}if(!orderData?.order_id||!orderData?.key_id)throw new Error(orderData?.error||"Payment order response is incomplete.");
     const checkout=new window.Razorpay({key:orderData.key_id,amount:orderData.amount,currency:orderData.currency,order_id:orderData.order_id,name:orderData.name||"CDAC CMCE Prep",description:orderData.description||"Premium access",prefill:orderData.prefill||{email:currentSession.user.email||""},theme:{color:"#126b61"},modal:{ondismiss:()=>restorePaymentDialog("Checkout closed. No premium access has been activated.",true)},handler:async response=>{
       restorePaymentDialog("Payment received. Verifying securely…");
       try{
