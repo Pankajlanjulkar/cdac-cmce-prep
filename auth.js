@@ -236,7 +236,7 @@ $("profileForm").addEventListener("submit", async event => {
 
 
 
-const isStudentProfileRoute = window.location.pathname.replace(/\\/$/,"")==="/profile";
+const isStudentProfileRoute = window.location.pathname.replace(/\/+$/, "") === "/profile";
 if(isStudentProfileRoute){
   document.body.classList.add("student-profile-route");
   const profilePage=document.createElement("main");
