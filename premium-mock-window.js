@@ -17,7 +17,7 @@
     }
 
     const doc = examWindow.document;
-    const inlineStyles = Array.from(document.querySelectorAll("style")).map(style => style.textContent).join("\\n");
+    const inlineStyles = Array.from(document.querySelectorAll("style")).map(style => style.textContent).join("\n");
     const stylesheetLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
       .map(link => '<link rel="stylesheet" href="' + link.href.replace(/&/g, "&amp;").replace(/"/g, "&quot;") + '">')
       .join("");
