@@ -265,7 +265,9 @@
     doc.getElementById("bankClose").addEventListener("click", () => bankWindow.close());
     doc.addEventListener("change", e => { if (e.target?.id === "cppPremiumLevel") document.getElementById("cppPremiumLevel").value = e.target.value; });
     doc.addEventListener("click", e => {
-      const b = e.target instanceof Element ? e.target.closest("button") : null;
+      // This listener runs on a different window/document. Avoid instanceof
+      // checks across window realms; use the element's closest() capability.
+      const b = e.target && typeof e.target.closest === "function" ? e.target.closest("button") : null;
       if (!b) return;
       if (b.id === "backToPremiumHubFromBank") { e.preventDefault(); bankWindow.close(); return; }
       if (b.id === "openCppPremium") { e.preventDefault(); document.getElementById("cppPremiumLevel").value = doc.getElementById("cppPremiumLevel").value; document.getElementById("openCppPremium").click(); syncPremiumBankWindow(); return; }
