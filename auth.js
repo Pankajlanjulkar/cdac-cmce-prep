@@ -296,7 +296,11 @@ async function startRazorpayPurchase(accessType){
         const verifiedSelection=window.getCMCESelection?.();
         if(verifiedSelection&&await hasPremiumAccess(verifiedSelection))window.__premiumAccessGrant={course_code:verifiedSelection.course_code,module_index:Number(verifiedSelection.module_index),user_id:currentSession.user.id};
         $("studentPaymentDialog").close();restoreCourseDialogAfterCheckout();alert("Payment verified. Your premium access is now active.");
-        const pending=window.__pendingPremiumAction;window.__pendingPremiumAction=null;if(pending?.isConnected){replayPremiumClick=true;pending.click();}
+        const pending=window.__pendingPremiumAction;window.__pendingPremiumAction=null;if(pending?.isConnected){
+          if(pending.id==="openPremiumBankSection"&&typeof window.openPremiumBankWindow==="function")window.openPremiumBankWindow();
+          else if(pending.id==="openPremiumMocksSection"&&typeof window.openPremiumMocksWindow==="function")window.openPremiumMocksWindow();
+          else{replayPremiumClick=true;pending.click();}
+        }
       }catch(err){restorePaymentDialog(err.message||"Verification failed. Contact support if money was deducted.",true);}
     }});
     checkout.on("payment.failed",response=>restorePaymentDialog(response.error?.description||"Payment failed. You can try again.",true));
