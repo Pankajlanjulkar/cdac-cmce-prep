@@ -289,8 +289,14 @@ const purchaseSelectionObserver=new MutationObserver(()=>{
 });
 const selectedTitle=document.getElementById("selectedModuleTitle");
 if(selectedTitle)purchaseSelectionObserver.observe(selectedTitle,{childList:true,characterData:true,subtree:true});
-$("buyCourseFromPlans")?.addEventListener("click",()=>startPurchaseFromPlans("course"));
-$("buyModuleFromPlans")?.addEventListener("click",()=>startPurchaseFromPlans("module"));
+function beginFreshPlansPurchase(accessType){
+  // A pricing-page purchase must never inherit the last module opened in the dashboard.
+  window.__pendingPlansPurchaseAfterSelection=null;
+  window.clearCMCESelection?.();
+  startPurchaseFromPlans(accessType);
+}
+$("buyCourseFromPlans")?.addEventListener("click",()=>beginFreshPlansPurchase("course"));
+$("buyModuleFromPlans")?.addEventListener("click",()=>beginFreshPlansPurchase("module"));
 
 document.addEventListener("click",async event=>{
   const target=event.target instanceof Element?event.target.closest(premiumEntrySelectors):null;if(!target)return;
