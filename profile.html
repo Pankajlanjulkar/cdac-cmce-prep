@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b6b73">
+<title>My Profile · CDAC CMCE Prep</title>
+<style>
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#14232d;background:#eef3f5}*{box-sizing:border-box}body{margin:0}.top{background:#fff;border-bottom:1px solid #d8e1e5;padding:17px max(22px,calc((100% - 960px)/2));display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{font-weight:850;font-size:20px}.brand span{color:#0b6b73}.btn{border:1px solid #0b6b73;background:#0b6b73;color:white;padding:11px 17px;border-radius:9px;font-weight:750;cursor:pointer;text-decoration:none}.btn.secondary{background:#fff;color:#14232d;border-color:#d8e1e5}.wrap{max-width:960px;margin:38px auto;padding:0 22px 60px}.back{display:inline-block;color:#0b6b73;text-decoration:none;font-weight:700;margin-bottom:22px}.eyebrow{color:#0b6b73;font-size:12px;font-weight:850;letter-spacing:1.8px}.heading h1{font-size:38px;margin:8px 0}.muted{color:#687982}.card{background:white;border:1px solid #d8e1e5;border-radius:15px;padding:24px;margin-top:18px}.card h2{font-size:20px;margin:0 0 18px}.form{display:grid;grid-template-columns:1fr 1fr;gap:15px}.form label{display:grid;gap:7px;font-weight:650}.form input{width:100%;padding:12px;border:1px solid #cfdada;border-radius:9px;font:inherit}.form button{grid-column:1/-1;justify-self:start}.list{display:grid;gap:12px}.item{border:1px solid #e0e8e8;border-radius:11px;padding:15px}.item strong{display:block;margin-bottom:6px}.item span{color:#62747a;font-size:14px;line-height:1.5}.notice{padding:12px 14px;border-radius:10px;background:#eaf6f0;border:1px solid #b8dfca;margin-top:12px}.notice.error{background:#fff1f0;border-color:#f0c2be}.footer{display:flex;justify-content:flex-end;margin-top:22px}@media(max-width:620px){.wrap{margin:24px auto;padding:0 14px 40px}.card{padding:18px}.form{grid-template-columns:1fr}.form button{grid-column:1}.heading h1{font-size:32px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="brand">CDAC <span>CMCE Prep</span></div><a class="btn secondary" href="/">Back to Courses</a></header>
+<main class="wrap">
+<a class="back" href="/">← Back to courses</a>
+<div class="heading"><div class="eyebrow">STUDENT ACCOUNT</div><h1>My Profile</h1><p class="muted">Manage your personal details and view your purchased access.</p></div>
+<div id="notice" aria-live="polite"></div>
+<section class="card"><h2>Personal details</h2><form class="form" id="profileForm"><label>Full name<input id="fullName" autocomplete="name" maxlength="100" required></label><label>Email address<input id="email" type="email" disabled></label><button class="btn" id="save" type="submit">Save details</button></form></section>
+<section class="card"><h2>Purchased courses &amp; modules</h2><p class="muted">Your active premium access is listed below.</p><div id="purchases"><p class="muted">Loading purchases…</p></div></section>
+<div class="footer"><button class="btn secondary" id="logout" type="button">Logout</button></div>
+</main>
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+const supabase=createClient("https://hnwduoyealnceyhmmskl.supabase.co","sb_publishable_x3wHQJFGHMQ9com5A0J9jA_4YhCzikX");
+const $=id=>document.getElementById(id);
+const courseNames={"PGCP-AC":"Advanced Computing","PGCP-MC":"Mobile Computing","PGCP-VLSI":"VLSI Design","PGCP-ESD":"Embedded Systems Design","PGCP-BDA":"Big Data Analytics"};
+const modules={"PGCP-AC":["C++ Programming","Object-Oriented Programming with Java","Algorithms and Data Structures with Java","Database Technologies","Web Programming Technologies"],"PGCP-MC":["OS Concepts and Linux Programming","Introduction to DBMS","Object-Oriented Programming with Java","Algorithms and Data Structures using Java","Web-based Java Programming"],"PGCP-VLSI":["Advanced Digital Design","System Architecture","Linux Shell Scripting & Python","Verilog HDL","HDL Simulation & Synthesis"],"PGCP-ESD":["Embedded C Programming","Data Structures and Algorithms","Microcontroller Programming and Interfacing","Embedded Operating Systems"],"PGCP-BDA":["Linux Programming and Cloud Computing & Data Collection and DBMS","Python & R Programming","Java Programming","Big Data Technologies"]};
+function message(msg,error=false){$("notice").innerHTML=msg?'<div class="notice'+(error?' error':'')+'"></div>':"";if(msg)$("notice").firstElementChild.textContent=msg;}
+async function init(){
+ const {data:{session},error}=await supabase.auth.getSession();
+ if(error||!session?.user){message("Please sign in to view your profile. Redirecting to the login page…",true);setTimeout(()=>location.assign("/"),900);return;}
+ const user=session.user;$("fullName").value=user.user_metadata?.full_name||"";$("email").value=user.email||"";
+ const [profileResult,purchaseResult]=await Promise.all([
+  supabase.from("student_profiles").select("full_name,email").eq("id",user.id).maybeSingle(),
+  supabase.from("student_purchases").select("course_code,access_type,module_index,status").eq("student_id",user.id).eq("status","active")
+ ]);
+ if(profileResult.error)message("Could not load personal details: "+profileResult.error.message,true);
+ else if(profileResult.data?.full_name)$("fullName").value=profileResult.data.full_name;
+ const host=$("purchases");
+ if(purchaseResult.error){host.textContent="Could not load purchases. Please refresh this page.";message(purchaseResult.error.message,true);}
+ else{
+  const rows=purchaseResult.data||[];
+  if(!rows.length)host.innerHTML='<p class="muted">No active purchases found yet.</p>';
+  else{
+   const grouped=new Map();rows.forEach(p=>{if(!grouped.has(p.course_code))grouped.set(p.course_code,[]);grouped.get(p.course_code).push(p);});
+   const list=document.createElement("div");list.className="list";
+   grouped.forEach((items,code)=>{const card=document.createElement("article");card.className="item";const title=document.createElement("strong");title.textContent=courseNames[code]||code;card.append(title);const detail=document.createElement("span");detail.textContent=items.some(p=>p.access_type==="course")?"Complete course access · All modules unlocked":items.filter(p=>p.access_type==="module").map(p=>(modules[code]||[])[Number(p.module_index)]||("Module "+(Number(p.module_index)+1))).join(" · ");card.append(detail);list.append(card);});
+   host.replaceChildren(list);
+  }
+ }
+}
+$("profileForm").addEventListener("submit",async e=>{e.preventDefault();const {data:{session}}=await supabase.auth.getSession();if(!session?.user){message("Please sign in again.",true);return;}const fullName=$("fullName").value.trim();if(!fullName){message("Please enter your name.",true);return;}$("save").disabled=true;try{const {error}=await supabase.from("student_profiles").upsert({id:session.user.id,full_name:fullName,email:session.user.email,updated_at:new Date().toISOString()},{onConflict:"id"});if(error)throw error;const {error:metaError}=await supabase.auth.updateUser({data:{full_name:fullName}});if(metaError)throw metaError;message("Your personal details have been saved.");}catch(err){message(err.message||"Could not save details.",true);}finally{$("save").disabled=false;}});
+$("logout").addEventListener("click",async()=>{$("logout").disabled=true;const {error}=await supabase.auth.signOut();if(error){message(error.message,true);$("logout").disabled=false;}else location.assign("/");});
+init();
+</script>
+</body></html>
