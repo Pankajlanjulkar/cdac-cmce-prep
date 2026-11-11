@@ -239,13 +239,21 @@
     }, 350);
   }
 
+  function preparePremiumMocksWindow() {
+    if (mocksWindow && !mocksWindow.closed) { mocksWindow.focus(); return; }
+    mocksWindow = window.open("", "cmcePremiumMocks", "popup=yes,width=1280,height=900,resizable=yes,scrollbars=yes");
+    if (!mocksWindow) { alert("Your browser blocked the new window. Allow pop-ups for this site and click Open Mock Tests again."); return; }
+    mocksWindow.document.open();
+    mocksWindow.document.write('<!doctype html><html><head><title>CDAC Premium Mock Tests</title><style>body{font:16px Arial,sans-serif;background:#f4f7f7;color:#263b3b;padding:32px}main{max-width:760px;margin:10vh auto;background:#fff;padding:28px;border:1px solid #dce5e3;border-radius:14px}</style></head><body><main><h2>Checking premium access…</h2><p>Sign in and purchase this module or the complete course in the original application tab to unlock mock tests.</p></main></body></html>');
+    mocksWindow.document.close();
+  }
+  window.openPremiumMocksWindow = openPremiumMocksWindow;
   document.addEventListener("click", event => {
     const button = event.target instanceof Element ? event.target.closest("#openPremiumMocksSection") : null;
-    if (button) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      openPremiumMocksWindow();
-    }
+    if (!button) return;
+    event.preventDefault();
+    if (window.__hasPremiumAccessGrant?.()) openPremiumMocksWindow();
+    else preparePremiumMocksWindow();
   }, true);
 
 
