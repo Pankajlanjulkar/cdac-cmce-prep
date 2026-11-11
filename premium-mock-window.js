@@ -156,7 +156,11 @@
       }
       const original = button.id ? document.getElementById(button.id) : null;
       if (original) {
-        button.addEventListener("click", event => { event.preventDefault(); original.click(); });
+        button.addEventListener("click", event => {
+          event.preventDefault();
+          original.click();
+          syncMocksWindow();
+        });
       } else if (button.classList.contains("exam-option")) {
         button.addEventListener("click", event => {
           event.preventDefault();
