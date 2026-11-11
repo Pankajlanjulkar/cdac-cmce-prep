@@ -5,7 +5,7 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_x3wHQJFGHMQ9com5A0J9jA_4YhCzikX
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 const style = document.createElement("style");
-style.textContent = `
+style.textContent = `\n[hidden]{display:none!important;}
 .auth-trigger{margin-left:10px}.auth-dialog{max-width:440px}.auth-dialog form{display:grid;gap:12px}.auth-dialog label{font-weight:650;font-size:14px}.auth-dialog input{width:100%;padding:12px;border:1px solid var(--line);border-radius:9px;font:inherit;margin-top:6px}.auth-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}.auth-message{padding:10px 12px;border-radius:9px;background:#edf7f1;color:#176044;font-size:14px;line-height:1.45}.auth-message.error{background:#fff0ef;color:#a12b23}.auth-muted{font-size:13px;color:var(--muted);line-height:1.5}.auth-link{border:0;background:none;color:var(--teal);font:inherit;font-weight:700;cursor:pointer;padding:8px 0}.auth-google{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;background:#fff;color:#202124;border:1px solid #dadce0}.auth-google:hover{background:#f8faff;border-color:#c6d2e1}.auth-divider{display:flex;align-items:center;gap:12px;margin:14px 0 0;color:var(--muted);font-size:12px}.auth-divider:before,.auth-divider:after{content:"";height:1px;background:var(--line);flex:1}
 `;
 document.head.append(style);
