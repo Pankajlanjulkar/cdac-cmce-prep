@@ -37,7 +37,7 @@ nav?.append(authButton);
 const profileButton = document.createElement("a");
 profileButton.className = "btn secondary auth-trigger";
 profileButton.id = "studentProfileButton";
-profileButton.href = "/profile";
+profileButton.href = "/profile.html";
 profileButton.textContent = "My Profile";
 profileButton.hidden = true;
 nav?.append(profileButton);
@@ -186,6 +186,10 @@ function syncAuthUI(session) {
   authButton.hidden=!!currentSession?.user;
   document.documentElement.dataset.studentSignedIn=currentSession?.user?"true":"false";
   profileButton.hidden = !currentSession?.user;
+  profileButton.addEventListener("click", event => {
+    event.preventDefault();
+    window.location.assign("/profile.html");
+  });
 }
 
 function profileNotice(message, error = false) {
