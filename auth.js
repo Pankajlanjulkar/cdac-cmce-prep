@@ -304,7 +304,7 @@ async function loadStudentProfilePage(){
  nameInput.value=user.user_metadata?.full_name||"";emailInput.value=user.email||"";
  const [{data:profile,error:profileError},{data:purchases,error:purchaseError}]=await Promise.all([
   supabase.from("student_profiles").select("full_name,email").eq("id",user.id).maybeSingle(),
-  supabase.from("student_purchases").select("course_code,access_type,module_index,status,created_at").eq("student_id",user.id).eq("status","active").order("created_at",{ascending:false})
+  supabase.from("student_purchases").select("course_code,access_type,module_index,status").eq("student_id",user.id).eq("status","active")
  ]);
  if(profileError)profilePageMessage("Could not load personal details: "+profileError.message,true);
  else if(profile?.full_name)nameInput.value=profile.full_name;
