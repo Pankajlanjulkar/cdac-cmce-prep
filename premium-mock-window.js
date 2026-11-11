@@ -85,8 +85,8 @@
         } else if (button.classList.contains("exam-option")) {
           button.addEventListener("click", event => {
             event.preventDefault();
-            const originals = document.querySelectorAll("#premiumMockOptions .exam-option");
-            originals[index]?.click();
+            const optionIndex = Array.from(clone.querySelectorAll("#premiumMockOptions .exam-option")).indexOf(button);
+            document.querySelectorAll("#premiumMockOptions .exam-option")[optionIndex]?.click();
           });
         } else {
           const paletteIndex = Array.from(clone.querySelectorAll("#premiumMockPalette button")).indexOf(button);
