@@ -855,7 +855,7 @@ function showQ(){
  document.getElementById("quizPrev").disabled=qi===0;
  document.getElementById("quizNext").textContent=qi===activeQs.length-1?"Finish preview":"Next question";
 }
-function startPreview(){if(platformTimer){clearInterval(platformTimer);platformTimer=null}qi=0;Object.keys(qa).forEach(k=>delete qa[k]);document.getElementById("quizPanel").hidden=false;document.getElementById("quizResult").hidden=true;const timer=document.getElementById("quizTimer");timer.hidden=!platformTestMode;if(platformTestMode){platformSeconds=3600;updatePlatformTimer();platformTimer=setInterval(()=>{platformSeconds--;updatePlatformTimer();if(platformSeconds<=0)finishPreview()},1000)}showQ()}
+function startPreview(){if(platformTimer){clearInterval(platformTimer);platformTimer=null}qi=0;Object.keys(qa).forEach(k=>delete qa[k]);document.getElementById("quizPanel").hidden=false;document.getElementById("quizResult").hidden=true;const timer=document.getElementById("quizTimer");if(timer)timer.hidden=!platformTestMode;if(platformTestMode){platformSeconds=3600;updatePlatformTimer();platformTimer=setInterval(()=>{platformSeconds--;updatePlatformTimer();if(platformSeconds<=0)finishPreview()},1000)}showQ()}
 function updatePlatformTimer(){const m=String(Math.floor(platformSeconds/60)).padStart(2,"0"),sec=String(platformSeconds%60).padStart(2,"0");const el=document.getElementById("quizTimer");el.textContent=m+":"+sec;el.style.color=platformSeconds<=300?"#b42318":"#176b45"}
 
 
