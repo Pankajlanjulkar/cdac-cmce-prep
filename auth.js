@@ -369,15 +369,15 @@ document.addEventListener("click",async event=>{
   event.preventDefault();event.stopImmediatePropagation();
   if(!currentSession?.user){openAuth("login");return;}
   const selection=window.getCMCESelection?.();if(!selection){alert("Please select a course module first.");return;}
+  if(target.id==="openPremiumBankSection" && typeof window.preparePremiumBankWindow==="function"){
+    if(!window.preparePremiumBankWindow()) return;
+  }
   try{
     const openPremiumTarget=()=>{
       const hub=$("premiumHub");
       if(target.id==="openPremiumBankSection"){
-        if(hub)hub.hidden=true;
-        $("premiumBankSection").hidden=false;
-        $("premiumMockTests").hidden=true;
-        $("premiumPracticePanel").hidden=true;
-        $("premiumUnavailable").hidden=true;
+        if(typeof window.openPremiumBankWindow==="function") window.openPremiumBankWindow();
+        else alert("Question bank window is not ready. Please refresh and try again.");
       }else if(target.id==="openPremiumMocksSection"){
         if(hub)hub.hidden=true;
         $("premiumBankSection").hidden=true;
