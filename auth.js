@@ -60,6 +60,19 @@ document.body.append(profileDialog);
 
 
 const $ = id => document.getElementById(id);
+
+const premiumHoverStyle=document.createElement("style");
+premiumHoverStyle.textContent=`
+#studentPaymentDialog .premium-choice-btn{position:relative;transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease,border-color .18s ease;transform-origin:center;will-change:transform}
+#studentPaymentDialog .premium-choice-btn:hover{transform:translateY(-3px) scale(1.015);box-shadow:0 10px 22px rgba(8,79,86,.22);z-index:1}
+#studentPaymentDialog #buyModuleAccess:hover{background:#084f56;border-color:#084f56}
+#studentPaymentDialog #buyCourseAccess:hover{background:#e8f4f4;border-color:#0b6b73;color:#084f56}
+#studentPaymentDialog .premium-choice-btn:active{transform:translateY(0) scale(.99);box-shadow:0 3px 8px rgba(8,79,86,.16)}
+#studentPaymentDialog .premium-choice-btn:focus-visible{outline:3px solid #f0b429;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){#studentPaymentDialog .premium-choice-btn{transition:none}#studentPaymentDialog .premium-choice-btn:hover{transform:none}}
+`;
+document.head.append(premiumHoverStyle);
+
 let mode = "login", busy = false, currentSession = null;
 function notice(message, error = false) {
   const box = document.createElement("div");box.className = "auth-message" + (error ? " error" : "");box.textContent = message || "";
@@ -170,7 +183,7 @@ function ensureRazorpayScript(){
 function ensurePaymentDialog(){
   let d=$("studentPaymentDialog");if(d)return d;
   d=document.createElement("dialog");d.id="studentPaymentDialog";d.className="auth-dialog";
-  d.innerHTML='<button class="close" type="button" id="paymentClose">Close</button><div class="eyebrow">Unlock premium access</div><h2>Choose your access</h2><p class="auth-muted" id="paymentSelectionText"></p><div id="paymentNotice" aria-live="polite"></div><div class="auth-actions" style="display:grid"><button class="btn" type="button" id="buyModuleAccess">Unlock this module · ₹10</button><button class="btn secondary" type="button" id="buyCourseAccess">Unlock complete course · ₹40</button></div><p class="auth-muted">Secure checkout powered by Razorpay. Access is activated only after payment verification.</p>';
+  d.innerHTML='<button class="close" type="button" id="paymentClose">Close</button><div class="eyebrow">Unlock premium access</div><h2>Choose your access</h2><p class="auth-muted" id="paymentSelectionText"></p><div id="paymentNotice" aria-live="polite"></div><div class="auth-actions" style="display:grid"><button class="btn premium-choice-btn" type="button" id="buyModuleAccess">Unlock this module · ₹10</button><button class="btn secondary premium-choice-btn" type="button" id="buyCourseAccess">Unlock complete course · ₹40</button></div><p class="auth-muted">Secure checkout powered by Razorpay. Access is activated only after payment verification.</p>';
   document.body.append(d);
   $("paymentClose").addEventListener("click",()=>d.close());
   $("buyModuleAccess").addEventListener("click",()=>{window.__premiumPurchaseChoiceStarted=true;startRazorpayPurchase("module");});
