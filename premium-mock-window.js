@@ -251,10 +251,23 @@
 
   let bankWindow = null;
   let bankSyncHandle = null;
-  function openPremiumBankWindow() {
-    if (bankWindow && !bankWindow.closed) { bankWindow.focus(); return; }
+  function preparePremiumBankWindow() {
+    if (bankWindow && !bankWindow.closed) { bankWindow.focus(); return true; }
     bankWindow = window.open("", "cmcePremiumQuestionBank", "popup=yes,width=1180,height=850,resizable=yes,scrollbars=yes");
-    if (!bankWindow) { alert("Your browser blocked the question-bank window. Allow pop-ups and click Open Question Bank again."); return; }
+    if (!bankWindow) { alert("Your browser blocked the question-bank window. Allow pop-ups for this site and click Open Question Bank again."); return false; }
+    bankWindow.document.open();
+    bankWindow.document.write('<!doctype html><html><head><title>CDAC Premium Question Bank</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font:16px Arial,sans-serif;background:#f4f7f7;color:#263b3b;padding:32px}main{max-width:760px;margin:10vh auto;background:white;padding:28px;border:1px solid #dce5e3;border-radius:14px}</style></head><body><main><h2>Checking premium access…</h2><p>Please complete sign-in or purchase in the original application tab. The question bank will open here once access is confirmed.</p></main></body></html>');
+    bankWindow.document.close();
+    return true;
+  }
+  function openPremiumBankWindow() {
+    if (!bankWindow || bankWindow.closed) {
+      bankWindow = window.open("", "cmcePremiumQuestionBank", "popup=yes,width=1180,height=850,resizable=yes,scrollbars=yes");
+      if (!bankWindow) { alert("Your browser blocked the question-bank window. Allow pop-ups for this site and click Open Question Bank again."); return; }
+    } else if (bankWindow.document.getElementById("bankWindowContent")) {
+      bankWindow.focus();
+      return;
+    }
     const doc = bankWindow.document;
     const styles = Array.from(document.querySelectorAll("style")).map(x => x.textContent).join("\n");
     const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map(x => '<link rel="stylesheet" href="' + x.href + '">').join("");
@@ -291,10 +304,8 @@
       const clone = a.cloneNode(true); clone.hidden = a.hidden; b.replaceWith(clone);
     });
   }
-  document.addEventListener("click", event => {
-    const button = event.target instanceof Element ? event.target.closest("#openPremiumBankSection") : null;
-    if (!button) return;
-    event.preventDefault(); event.stopImmediatePropagation(); openPremiumBankWindow();
-  }, true);
+  // auth.js performs the purchase check before populating the prepared window.
+  window.preparePremiumBankWindow = preparePremiumBankWindow;
+  window.openPremiumBankWindow = openPremiumBankWindow;
 
 })();
