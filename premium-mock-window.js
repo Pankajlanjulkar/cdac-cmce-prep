@@ -239,4 +239,51 @@
     }
   }, true);
 
+
+  let bankWindow = null;
+  let bankSyncHandle = null;
+  function openPremiumBankWindow() {
+    if (bankWindow && !bankWindow.closed) { bankWindow.focus(); return; }
+    bankWindow = window.open("", "cmcePremiumQuestionBank", "popup=yes,width=1180,height=850,resizable=yes,scrollbars=yes");
+    if (!bankWindow) { alert("Your browser blocked the question-bank window. Allow pop-ups and click Open Question Bank again."); return; }
+    const doc = bankWindow.document;
+    const styles = Array.from(document.querySelectorAll("style")).map(x => x.textContent).join("\n");
+    const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map(x => '<link rel="stylesheet" href="' + x.href + '">').join("");
+    doc.open();
+    doc.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CDAC Premium Question Bank</title>${links}<style>${styles}</style><style>body{margin:0;padding:18px;background:#f4f7f7;color:#172b2a}.bank-window-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;position:sticky;top:0;z-index:10;background:#fff;padding:12px 16px;border:1px solid #dce5e3;border-radius:12px;margin-bottom:16px}.bank-window-bar button{padding:9px 13px;border-radius:8px;border:1px solid #cbd5d3;background:#fff;cursor:pointer}#bankWindowContent{max-width:1400px;margin:0 auto}#bankWindowContent [hidden]{display:none!important}</style></head><body><div class="bank-window-bar"><strong>CDAC CMCE · Premium Question Bank</strong><div><button id="bankFullscreen">Enter fullscreen</button> <button id="bankClose">Close window</button></div></div><main id="bankWindowContent"></main></body></html>`);
+    doc.close();
+    doc.getElementById("bankFullscreen").addEventListener("click", async () => { try { if (!doc.fullscreenElement) await doc.documentElement.requestFullscreen(); else await doc.exitFullscreen(); doc.getElementById("bankFullscreen").textContent = doc.fullscreenElement ? "Exit fullscreen" : "Enter fullscreen"; } catch (_) { alert("Fullscreen unavailable. Maximize the window manually."); } });
+    doc.getElementById("bankClose").addEventListener("click", () => bankWindow.close());
+    doc.addEventListener("change", e => { if (e.target?.id === "cppPremiumLevel") document.getElementById("cppPremiumLevel").value = e.target.value; });
+    doc.addEventListener("click", e => {
+      const b = e.target instanceof Element ? e.target.closest("button") : null;
+      if (!b) return;
+      if (b.id === "backToPremiumHubFromBank") { e.preventDefault(); bankWindow.close(); return; }
+      if (b.id === "openCppPremium") { e.preventDefault(); document.getElementById("cppPremiumLevel").value = doc.getElementById("cppPremiumLevel").value; document.getElementById("openCppPremium").click(); syncPremiumBankWindow(); return; }
+      if (b.classList.contains("quiz-option")) { const i = Array.from(doc.querySelectorAll("#premiumOptions .quiz-option")).indexOf(b); document.querySelectorAll("#premiumOptions .quiz-option")[i]?.click(); syncPremiumBankWindow(); return; }
+      if (b.id === "premiumPrev" || b.id === "premiumNext") { document.getElementById(b.id).click(); syncPremiumBankWindow(); }
+    });
+    syncPremiumBankWindow();
+    bankSyncHandle = window.setInterval(() => { if (!bankWindow || bankWindow.closed) { clearInterval(bankSyncHandle); bankSyncHandle = null; bankWindow = null; return; } syncPremiumBankWindow(); }, 350);
+  }
+  function syncPremiumBankWindow() {
+    if (!bankWindow || bankWindow.closed) return;
+    const doc = bankWindow.document, host = doc.getElementById("bankWindowContent"), source = document.getElementById("premiumBankSection");
+    if (!host || !source) return;
+    let target = doc.getElementById("premiumBankSection");
+    if (!target) { target = source.cloneNode(true); target.hidden = false; target.style.display = "block"; host.replaceChildren(target); }
+    const sourceSelect = document.getElementById("cppPremiumLevel"), popupSelect = doc.getElementById("cppPremiumLevel");
+    if (sourceSelect && popupSelect && doc.activeElement !== popupSelect && popupSelect.value !== sourceSelect.value) popupSelect.value = sourceSelect.value;
+    ["premiumPracticePanel","premiumUnavailable"].forEach(id => {
+      const a = document.getElementById(id), b = doc.getElementById(id);
+      if (!a || !b || (a.hidden === b.hidden && a.innerHTML === b.innerHTML)) return;
+      const clone = a.cloneNode(true); clone.hidden = a.hidden; b.replaceWith(clone);
+    });
+  }
+  document.addEventListener("click", event => {
+    const button = event.target instanceof Element ? event.target.closest("#openPremiumBankSection") : null;
+    if (!button) return;
+    event.preventDefault(); event.stopImmediatePropagation(); openPremiumBankWindow();
+  }, true);
+
 })();
