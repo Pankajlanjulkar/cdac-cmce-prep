@@ -1,4 +1,4 @@
-name: Deploy Razorpay payment verification function
+name: Deploy Razorpay payment functions
 
 on:
   workflow_dispatch:
@@ -6,6 +6,7 @@ on:
     branches:
       - main
     paths:
+      - "supabase/functions/create-razorpay-order/**"
       - "supabase/functions/verify-razorpay-payment/**"
       - ".github/workflows/deploy-razorpay-verification.yml"
 
@@ -21,7 +22,12 @@ jobs:
         with:
           version: latest
 
-      - name: Deploy verification function
+      - name: Deploy order creation function
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase functions deploy create-razorpay-order --project-ref hnwduoyealnceyhmmskl --yes
+      - name: Deploy payment verification function
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
