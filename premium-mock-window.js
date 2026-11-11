@@ -71,9 +71,11 @@
     if (!host) return;
 
     const sourceIds = ["premiumMockPanel", "premiumMockResult"];
-    const fragments = sourceIds.map(id => {
+    sourceIds.forEach(id => {
       const source = document.getElementById(id);
-      if (!source) return null;
+      if (!source) return;
+      const current = host.querySelector("#" + id);
+      if (current && current.hidden === source.hidden && current.innerHTML === source.innerHTML) return;
       const clone = source.cloneNode(true);
       clone.hidden = source.hidden;
       clone.querySelectorAll("button").forEach((button, index) => {
@@ -82,12 +84,14 @@
           button.addEventListener("click", event => {
             event.preventDefault();
             originalById.click();
+            syncFromOriginal();
           });
         } else if (button.classList.contains("exam-option")) {
           button.addEventListener("click", event => {
             event.preventDefault();
             const optionIndex = Array.from(clone.querySelectorAll("#premiumMockOptions .exam-option")).indexOf(button);
             document.querySelectorAll("#premiumMockOptions .exam-option")[optionIndex]?.click();
+            syncFromOriginal();
           });
         } else {
           const paletteIndex = Array.from(clone.querySelectorAll("#premiumMockPalette button")).indexOf(button);
@@ -95,14 +99,14 @@
             button.addEventListener("click", event => {
               event.preventDefault();
               document.querySelectorAll("#premiumMockPalette button")[paletteIndex]?.click();
+              syncFromOriginal();
             });
           }
         }
       });
-      return clone;
-    }).filter(Boolean);
-
-    host.replaceChildren(...fragments);
+      if (current) current.replaceWith(clone);
+      else host.appendChild(clone);
+    });
   }
 
   // Capture before the original Start button handler. The existing exam logic
@@ -158,12 +162,14 @@
           event.preventDefault();
           const idx = Array.from(root.querySelectorAll("#premiumMockOptions .exam-option")).indexOf(button);
           document.querySelectorAll("#premiumMockOptions .exam-option")[idx]?.click();
+          syncMocksWindow();
         });
       } else if (button.closest("#premiumMockPalette")) {
         const idx = Array.from(root.querySelectorAll("#premiumMockPalette button")).indexOf(button);
         button.addEventListener("click", event => {
           event.preventDefault();
           document.querySelectorAll("#premiumMockPalette button")[idx]?.click();
+          syncMocksWindow();
         });
       }
     });
@@ -192,6 +198,7 @@
       const source = document.getElementById(id);
       const target = doc.getElementById(id);
       if (!source || !target) return;
+      if (target.hidden === source.hidden && target.innerHTML === source.innerHTML) return;
       const clone = source.cloneNode(true);
       clone.hidden = source.hidden;
       bindMockWindowControls(clone);
@@ -221,7 +228,11 @@
 
   document.addEventListener("click", event => {
     const button = event.target instanceof Element ? event.target.closest("#openPremiumMocksSection") : null;
-    if (button) openPremiumMocksWindow();
+    if (button) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openPremiumMocksWindow();
+    }
   }, true);
 
 })();
