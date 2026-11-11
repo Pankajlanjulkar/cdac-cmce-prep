@@ -239,6 +239,11 @@ $("profileForm").addEventListener("submit", async event => {
 });
 
 
+window.__hasPremiumAccessGrant=()=>{
+  const selection=window.getCMCESelection?.();
+  const grant=window.__premiumAccessGrant;
+  return !!(currentSession?.user&&grant&&grant.user_id===currentSession.user.id&&selection&&grant.course_code===selection.course_code&&Number(grant.module_index)===Number(selection.module_index));
+};
 const premiumEntrySelectors=["#openPremiumBankSection","#openPremiumMocksSection","#openCppPremium","#startPremiumMock"].join(",");
 let paymentBusy=false,replayPremiumClick=false,courseDialogSuspendedForCheckout=false;
 function ensureRazorpayScript(){
@@ -288,6 +293,8 @@ async function startRazorpayPurchase(accessType){
       try{
         const {data:verification,error}=await supabase.functions.invoke("verify-razorpay-payment",{body:{razorpay_order_id:response.razorpay_order_id,razorpay_payment_id:response.razorpay_payment_id,razorpay_signature:response.razorpay_signature}});
         if(error)throw new Error(error.message||"Payment verification failed.");if(!verification?.success)throw new Error(verification?.error||"Payment could not be verified.");
+        const verifiedSelection=window.getCMCESelection?.();
+        if(verifiedSelection&&await hasPremiumAccess(verifiedSelection))window.__premiumAccessGrant={course_code:verifiedSelection.course_code,module_index:Number(verifiedSelection.module_index),user_id:currentSession.user.id};
         $("studentPaymentDialog").close();restoreCourseDialogAfterCheckout();alert("Payment verified. Your premium access is now active.");
         const pending=window.__pendingPremiumAction;window.__pendingPremiumAction=null;if(pending?.isConnected){replayPremiumClick=true;pending.click();}
       }catch(err){restorePaymentDialog(err.message||"Verification failed. Contact support if money was deducted.",true);}
@@ -374,16 +381,14 @@ document.addEventListener("click",async event=>{
   }
   try{
     const openPremiumTarget=()=>{
+      window.__premiumAccessGrant={course_code:selection.course_code,module_index:Number(selection.module_index),user_id:currentSession.user.id};
       const hub=$("premiumHub");
       if(target.id==="openPremiumBankSection"){
         if(typeof window.openPremiumBankWindow==="function") window.openPremiumBankWindow();
         else alert("Question bank window is not ready. Please refresh and try again.");
       }else if(target.id==="openPremiumMocksSection"){
-        if(hub)hub.hidden=true;
-        $("premiumBankSection").hidden=true;
-        $("premiumMockTests").hidden=false;
-        $("premiumMockPanel").hidden=true;
-        $("premiumMockResult").hidden=true;
+        if(typeof window.openPremiumMocksWindow==="function") window.openPremiumMocksWindow();
+        else alert("Mock test window is not ready. Please refresh and try again.");
       }else{
         replayPremiumClick=true;
         target.click();
@@ -434,7 +439,7 @@ document.addEventListener("click",async event=>{
 supabase.auth.onAuthStateChange(async (event,session)=>{
   syncAuthUI(session);
   if(event==="SIGNED_IN" && session?.user) await claimThisDevice(session);
-  if(event==="SIGNED_OUT") { if(deviceCheckTimer)clearInterval(deviceCheckTimer); deviceCheckTimer=null; deviceSessionBlocked=false; }
+  if(event==="SIGNED_OUT") { window.__premiumAccessGrant=null; if(deviceCheckTimer)clearInterval(deviceCheckTimer); deviceCheckTimer=null; deviceSessionBlocked=false; }
   if(session?.user&&pendingPlansPurchase){
     const requested=pendingPlansPurchase;
     setTimeout(()=>startPurchaseFromPlans(requested),0);
