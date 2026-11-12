@@ -70,7 +70,7 @@
       ["Premium mocks", completed + " / 10"],
       ["Platform test", platformAttempt ? "Completed" : "Not attempted"],
       ["Average score", allAttempts.length ? average.toFixed(1) + " / 40" : "—"],
-      ["Highest score", completed ? best + " / 40" : "—"],
+      ["Highest score", allAttempts.length ? best + " / 40" : "—"],
       ["Answer accuracy", answered ? accuracy.toFixed(1) + "%" : "—"]
     ];
     cards.forEach(([label, value]) => {
