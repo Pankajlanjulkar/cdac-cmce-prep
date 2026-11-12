@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-const supabase=createClient("https://hnwduoyealnceyhmmskl.supabase.co","sb_publishable_x3wHQJFGHMQ9com5A0J9J_A_4YhCzikX".replace("J_A","J_A"));
+const supabase=createClient("https://hnwduoyealnceyhmmskl.supabase.co","sb_publishable_x3wHQJFGHMQ9com5A0J9jA_4YhCzikX);
 const style=document.createElement("style");
 style.textContent=`
 #studentReferralButton{margin-left:8px}.referral-dialog{max-width:560px}.referral-card{background:#f4f9f9;border:1px solid #c9dfe0;border-radius:12px;padding:16px;margin:14px 0}.referral-code{font-size:22px;font-weight:850;letter-spacing:2px;color:#0b6b73}.referral-progress{height:10px;background:#e3eaec;border-radius:99px;overflow:hidden;margin:10px 0}.referral-progress>span{display:block;height:100%;background:#0b6b73;width:0}.referral-dialog input{width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;margin:7px 0 12px;font:inherit}.referral-muted{color:var(--muted);font-size:13px;line-height:1.5}
