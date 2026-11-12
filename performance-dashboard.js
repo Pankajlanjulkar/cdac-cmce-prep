@@ -36,15 +36,29 @@
     return rows.sort((a, b) => a.testIndex - b.testIndex);
   }
 
+  function readPlatformAttempt() {
+    const selected = selection();
+    if (!selected) return null;
+    try {
+      const raw = localStorage.getItem("cmce_platform_test_result_v1:" + selected.code + ":" + selected.moduleIndex);
+      if (!raw) return null;
+      const item = JSON.parse(raw);
+      if (!item || Number(item.questionCount) !== 40 || !Number.isFinite(Number(item.score))) return null;
+      return { testIndex: -1, score: Number(item.score), answered: Number(item.answered) || 0, submittedAt: item.submittedAt || null, label: "Free Platform Test" };
+    } catch (_) { return null; }
+  }
+
   function renderPerformance() {
     const host = document.getElementById("performanceContent");
     if (!host) return;
     const attempts = readAttempts();
+    const platformAttempt = readPlatformAttempt();
+    const allAttempts = platformAttempt ? attempts.concat(platformAttempt) : attempts;
     const completed = attempts.length;
-    const totalScore = attempts.reduce((sum, item) => sum + item.score, 0);
-    const average = completed ? totalScore / completed : 0;
-    const best = completed ? Math.max(...attempts.map(item => item.score)) : 0;
-    const answered = attempts.reduce((sum, item) => sum + item.answered, 0);
+    const totalScore = allAttempts.reduce((sum, item) => sum + item.score, 0);
+    const average = allAttempts.length ? totalScore / allAttempts.length : 0;
+    const best = allAttempts.length ? Math.max(...allAttempts.map(item => item.score)) : 0;
+    const answered = allAttempts.reduce((sum, item) => sum + item.answered, 0);
     const correct = totalScore;
     const accuracy = answered ? (correct / answered) * 100 : 0;
 
@@ -53,8 +67,9 @@
     metrics.className = "grid";
     metrics.style.cssText = "grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin:16px 0";
     const cards = [
-      ["Tests completed", completed + " / 10"],
-      ["Average score", completed ? average.toFixed(1) + " / 40" : "—"],
+      ["Premium mocks", completed + " / 10"],
+      ["Platform test", platformAttempt ? "Completed" : "Not attempted"],
+      ["Average score", allAttempts.length ? average.toFixed(1) + " / 40" : "—"],
       ["Highest score", completed ? best + " / 40" : "—"],
       ["Answer accuracy", answered ? accuracy.toFixed(1) + "%" : "—"]
     ];
@@ -75,7 +90,7 @@
     const heading = document.createElement("h3");
     heading.textContent = "Mock test history";
     host.appendChild(heading);
-    if (!completed) {
+    if (!allAttempts.length) {
       const empty = document.createElement("p");
       empty.className = "notice";
       empty.textContent = "No submitted mock tests are recorded for this module on this device yet. Complete a premium mock test to see your score, accuracy and progress here.";
@@ -85,11 +100,12 @@
 
     const table = document.createElement("div");
     table.style.cssText = "overflow-x:auto";
-    const rows = attempts.map(item => {
+    const rows = allAttempts.map(item => {
       const pct = Math.round(item.score / 40 * 100);
       const date = item.submittedAt && !Number.isNaN(Date.parse(item.submittedAt))
         ? new Date(item.submittedAt).toLocaleString() : "—";
-      return "<tr><td>Mock Test " + (item.testIndex + 1) + "</td><td>" + item.score + " / 40</td><td>" + pct + "%</td><td>" + item.answered + " / 40</td><td>" + esc(date) + "</td></tr>";
+      const label = item.label || ("Mock Test " + (item.testIndex + 1));
+      return "<tr><td>" + esc(label) + "</td><td>" + item.score + " / 40</td><td>" + pct + "%</td><td>" + item.answered + " / 40</td><td>" + esc(date) + "</td></tr>";
     }).join("");
     table.innerHTML = '<table style="width:100%;border-collapse:collapse;min-width:560px"><thead><tr><th style="text-align:left;padding:10px;border-bottom:1px solid var(--line)">Test</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--line)">Score</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--line)">Percentage</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--line)">Answered</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--line)">Submitted</th></tr></thead><tbody>' + rows + '</tbody></table>';
     host.appendChild(table);
@@ -128,6 +144,26 @@
       if (typeof openWorkspacePage === "function") openWorkspacePage("workspaceHome");
       else home.hidden = false;
     });
+    // Capture free platform-test submissions as well as the premium mock records.
+    if (typeof submitExam === "function" && !window.__cmcePerformanceSubmitWrapped) {
+      const originalSubmitExam = submitExam;
+      submitExam = function(auto) {
+        const shouldSave = !examSubmitted && Array.isArray(examQs) && examQs.length === 40;
+        const selected = selection();
+        const record = shouldSave && selected ? {
+          questionCount: 40,
+          score: examQs.reduce((sum, q, i) => sum + (examAnswers[i] === q.a ? 1 : 0), 0),
+          answered: Object.keys(examAnswers).length,
+          submittedAt: new Date().toISOString()
+        } : null;
+        originalSubmitExam(auto);
+        if (record) {
+          try { localStorage.setItem("cmce_platform_test_result_v1:" + selected.code + ":" + selected.moduleIndex, JSON.stringify(record)); } catch (_) {}
+          renderPerformance();
+        }
+      };
+      window.__cmcePerformanceSubmitWrapped = true;
+    }
     document.addEventListener("click", event => {
       const target = event.target && event.target.closest ? event.target.closest("#submitPremiumMock") : null;
       if (target) window.setTimeout(renderPerformance, 0);
