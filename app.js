@@ -824,6 +824,7 @@ else{
 const sourceQs=Array.isArray(activeQs)?activeQs:[];
 examQs=sourceQs.length?Array.from({length:40},(_,i)=>sourceQs[i%sourceQs.length]):[];
 }
+examQs=shuffleQuestionSet(examQs,Math.random());
 if(!examQs.length){document.getElementById("testIntro").insertAdjacentHTML("beforeend",'<p class="notice">A verified question set is not available for this module yet.</p>');return;}
 const intro=document.querySelector("#testIntro p");
 if(intro)intro.textContent="This free mock test contains exactly 40 MCQs and has a 60-minute time limit. Your score, correct answers and explanations will be available after submission.";
@@ -844,8 +845,9 @@ if(Array.isArray(raw))return {q:raw[0]??"",o:Array.isArray(raw[1])?raw[1]:[],a:N
 if(!raw||typeof raw!=="object")return {q:"",o:[],a:-1,e:""};
 return {q:raw.q??raw.question??raw.text??raw.prompt??"",o:raw.o??raw.options??raw.choices??raw.answers??[],a:Number(raw.a??raw.answerIndex??raw.correctAnswer??raw.answer),e:raw.e??raw.explanation??""};
 }
+let previewQs=[];
 function showQ(){
- const q=normalizePreviewQuestion(activeQs[qi]);
+ const q=previewQs[qi]||normalizePreviewQuestion(activeQs[qi]);
  document.getElementById("quizProgress").textContent="Question "+(qi+1)+" of "+activeQs.length;
  const questionEl=document.getElementById("quizQuestion");
  questionEl.textContent=q.q||"Question content is unavailable. Please report this module so its question data can be corrected.";
@@ -857,7 +859,7 @@ function showQ(){
  document.getElementById("quizPrev").disabled=qi===0;
  document.getElementById("quizNext").textContent=qi===activeQs.length-1?"Finish preview":"Next question";
 }
-function startPreview(){if(platformTimer){clearInterval(platformTimer);platformTimer=null}qi=0;Object.keys(qa).forEach(k=>delete qa[k]);document.getElementById("quizPanel").hidden=false;document.getElementById("quizResult").hidden=true;const timer=document.getElementById("quizTimer");timer.hidden=!platformTestMode;if(platformTestMode){platformSeconds=3600;updatePlatformTimer();platformTimer=setInterval(()=>{platformSeconds--;updatePlatformTimer();if(platformSeconds<=0)finishPreview()},1000)}showQ()}
+function startPreview(){if(platformTimer){clearInterval(platformTimer);platformTimer=null}previewQs=shuffleQuestionSet(activeQs,Math.random());qi=0;Object.keys(qa).forEach(k=>delete qa[k]);document.getElementById("quizPanel").hidden=false;document.getElementById("quizResult").hidden=true;const timer=document.getElementById("quizTimer");timer.hidden=!platformTestMode;if(platformTestMode){platformSeconds=3600;updatePlatformTimer();platformTimer=setInterval(()=>{platformSeconds--;updatePlatformTimer();if(platformSeconds<=0)finishPreview()},1000)}showQ()}
 function updatePlatformTimer(){const m=String(Math.floor(platformSeconds/60)).padStart(2,"0"),sec=String(platformSeconds%60).padStart(2,"0");const el=document.getElementById("quizTimer");el.textContent=m+":"+sec;el.style.color=platformSeconds<=300?"#b42318":"#176b45"}
 
 
@@ -922,7 +924,7 @@ try{await ensureBdaQuestionData();}
 catch(error){alert("The question bank could not be loaded. Please check your connection and try again. "+(error?.message||""));return;}
 finally{if(startButton){startButton.disabled=false;startButton.textContent=originalButtonText;}}
 }
-const levelSelect=document.getElementById("cppPremiumLevel");const level=levelSelect.value;const hardOption=[...levelSelect.options].find(o=>o.value==="hard");if(hardOption)hardOption.hidden=false;if(selectedCourse.code==="PGCP-BDA"&&selectedModuleIndex===0){premiumQs=level==="easy"?bdaLinuxCloudPremiumEasyQs:level==="moderate"?bdaLinuxCloudPremiumModerateQs:bdaLinuxCloudPremiumHardQs;}else if(selectedCourse.code==="PGCP-ESD"&&selectedModuleIndex===0){premiumQs=level==="easy"?esdEmbeddedCPremiumEasyQs:level==="moderate"?esdEmbeddedCPremiumModerateQs:esdEmbeddedCPremiumHardQs;}else if(selectedCourse.code==="PGCP-ESD"&&selectedModuleIndex===1){premiumQs=level==="easy"?esdDsaPremiumEasyQs:level==="moderate"?esdDsaPremiumModerateQs:esdDsaPremiumHardQs;}else if(selectedCourse.code==="PGCP-ESD"&&selectedModuleIndex===2){premiumQs=level==="easy"?esdMcuPremiumEasyQs:level==="moderate"?esdMcuPremiumModerateQs:esdMcuPremiumHardQs;}else if(selectedCourse.code==="PGCP-ESD"&&selectedModuleIndex===3){premiumQs=level==="easy"?esdOsPremiumEasyQs:level==="moderate"?esdOsPremiumModerateQs:esdOsPremiumHardQs;}else if(selectedCourse.code==="PGCP-VLSI"&&selectedModuleIndex===0){premiumQs=level==="easy"?vlsiDigitalPremiumEasyQs:level==="moderate"?vlsiDigitalPremiumModerateQs:vlsiDigitalPremiumHardQs;}else if(selectedCourse.code==="PGCP-VLSI"&&selectedModuleIndex===1){premiumQs=level==="easy"?vlsiSystemPremiumEasyQs:level==="moderate"?vlsiSystemPremiumModerateQs:vlsiSystemPremiumHardQs;}else if(selectedCourse.code==="PGCP-VLSI"&&selectedModuleIndex===2){premiumQs=level==="easy"?vlsiLinuxPythonPremiumEasyQs:level==="moderate"?vlsiLinuxPythonPremiumModerateQs:vlsiLinuxPythonPremiumHardQs;}else if(selectedCourse.code==="PGCP-VLSI"&&selectedModuleIndex===3){premiumQs=level==="easy"?vlsiVerilogPremiumEasyQs:level==="moderate"?vlsiVerilogPremiumModerateQs:vlsiVerilogPremiumHardQs;}else if(selectedCourse.code==="PGCP-VLSI"&&selectedModuleIndex===4){premiumQs=level==="easy"?vlsiSynthesisPremiumEasyQs:level==="moderate"?vlsiSynthesisPremiumModerateQs:vlsiSynthesisPremiumHardQs;}else if(selectedCourse.code==="PGCP-MC"&&selectedModuleIndex===0){premiumQs=level==="easy"?osLinuxPremiumEasyQs:level==="moderate"?osLinuxPremiumModerateQs:osLinuxPremiumHardQs;}else if(selectedCourse.code==="PGCP-MC"&&selectedModuleIndex===1){premiumQs=level==="easy"?mcDbmsPremiumEasyQs:level==="moderate"?mcDbmsPremiumModerateQs:mcDbmsPremiumHardQs;}else if(selectedCourse.code==="PGCP-MC"&&selectedModuleIndex===2){premiumQs=level==="easy"?mcJavaPremiumEasyQs:level==="moderate"?mcJavaPremiumModerateQs:mcJavaPremiumHardQs;}else if(selectedCourse.code==="PGCP-MC"&&selectedModuleIndex===3){premiumQs=level==="easy"?mcDsaPremiumEasyQs:level==="moderate"?mcDsaPremiumModerateQs:mcDsaPremiumHardQs;}else if(selectedCourse.code==="PGCP-MC"&&selectedModuleIndex===4){premiumQs=level==="easy"?mcWebJavaPremiumEasyQs:level==="moderate"?mcWebJavaPremiumModerateQs:mcWebJavaPremiumHardQs;}else if(selectedCourse.code==="PGCP-AC"&&selectedModuleIndex===1){premiumQs=level==="easy"?javaPremiumEasyQs:level==="moderate"?javaPremiumModerateQs:javaPremiumHardQs;}else if(selectedCourse.code==="PGCP-AC"&&selectedModuleIndex===2){premiumQs=level==="easy"?dsaJavaPremiumEasyQs:level==="moderate"?dsaJavaPremiumModerateQs:dsaJavaPremiumHardQs;}else if(selectedCourse.code==="PGCP-AC"&&selectedModuleIndex===3){premiumQs=level==="easy"?dbTechPremiumEasyQs:level==="moderate"?dbTechPremiumModerateQs:dbTechPremiumHardQs;}else if(selectedCourse.code==="PGCP-AC"&&selectedModuleIndex===4){const bank=level==="easy"?webTechPremiumEasyQs:level==="moderate"?webTechPremiumModerateQs:webTechPremiumHardQs;premiumQs=bank.map(([q,o,a,e])=>({q,o,a,e}));}else{premiumQs=level==="easy"?cppPremiumEasyQs:level==="moderate"?cppPremiumModerateQs:cppPremiumHardQs;}if(!Array.isArray(premiumQs)||premiumQs.length!==100){alert("This 100-question bank is not ready yet. Please try again in a moment.");return;}premiumIndex=0;premiumAnswers={};document.getElementById("premiumUnavailable").hidden=true;document.getElementById("premiumPracticePanel").hidden=false;renderPremium()}
+const levelSelect=document.getElementById("cppPremiumLevel");const level=levelSelect.value;const hardOption=[...levelSelect.options].find(o=>o.value==="hard");if(hardOption)hardOption.hidden=false;if(selectedCourse.code==="PGCP-BDA"&&selectedModuleIndex===0){premiumQs=level==="easy"?bdaLinuxCloudPremiumEasyQs:level==="moderate"?bdaLinuxCloudPremiumModerateQs:bdaLinuxCloudPremiumHardQs;}else if(selectedCourse.code==="PGCP-ESD"&&selectedModuleIndex===0){premiumQs=level==="easy"?esdEmbeddedCPremiumEasyQs:level==="moderate"?esdEmbeddedCPremiumModerateQs:esdEmbeddedCPremiumHardQs;}else if(selectedCourse.code==="PGCP-ESD"&&selectedModuleIndex===1){premiumQs=level==="easy"?esdDsaPremiumEasyQs:level==="moderate"?esdDsaPremiumModerateQs:esdDsaPremiumHardQs;}else if(selectedCourse.code==="PGCP-ESD"&&selectedModuleIndex===2){premiumQs=level==="easy"?esdMcuPremiumEasyQs:level==="moderate"?esdMcuPremiumModerateQs:esdMcuPremiumHardQs;}else if(selectedCourse.code==="PGCP-ESD"&&selectedModuleIndex===3){premiumQs=level==="easy"?esdOsPremiumEasyQs:level==="moderate"?esdOsPremiumModerateQs:esdOsPremiumHardQs;}else if(selectedCourse.code==="PGCP-VLSI"&&selectedModuleIndex===0){premiumQs=level==="easy"?vlsiDigitalPremiumEasyQs:level==="moderate"?vlsiDigitalPremiumModerateQs:vlsiDigitalPremiumHardQs;}else if(selectedCourse.code==="PGCP-VLSI"&&selectedModuleIndex===1){premiumQs=level==="easy"?vlsiSystemPremiumEasyQs:level==="moderate"?vlsiSystemPremiumModerateQs:vlsiSystemPremiumHardQs;}else if(selectedCourse.code==="PGCP-VLSI"&&selectedModuleIndex===2){premiumQs=level==="easy"?vlsiLinuxPythonPremiumEasyQs:level==="moderate"?vlsiLinuxPythonPremiumModerateQs:vlsiLinuxPythonPremiumHardQs;}else if(selectedCourse.code==="PGCP-VLSI"&&selectedModuleIndex===3){premiumQs=level==="easy"?vlsiVerilogPremiumEasyQs:level==="moderate"?vlsiVerilogPremiumModerateQs:vlsiVerilogPremiumHardQs;}else if(selectedCourse.code==="PGCP-VLSI"&&selectedModuleIndex===4){premiumQs=level==="easy"?vlsiSynthesisPremiumEasyQs:level==="moderate"?vlsiSynthesisPremiumModerateQs:vlsiSynthesisPremiumHardQs;}else if(selectedCourse.code==="PGCP-MC"&&selectedModuleIndex===0){premiumQs=level==="easy"?osLinuxPremiumEasyQs:level==="moderate"?osLinuxPremiumModerateQs:osLinuxPremiumHardQs;}else if(selectedCourse.code==="PGCP-MC"&&selectedModuleIndex===1){premiumQs=level==="easy"?mcDbmsPremiumEasyQs:level==="moderate"?mcDbmsPremiumModerateQs:mcDbmsPremiumHardQs;}else if(selectedCourse.code==="PGCP-MC"&&selectedModuleIndex===2){premiumQs=level==="easy"?mcJavaPremiumEasyQs:level==="moderate"?mcJavaPremiumModerateQs:mcJavaPremiumHardQs;}else if(selectedCourse.code==="PGCP-MC"&&selectedModuleIndex===3){premiumQs=level==="easy"?mcDsaPremiumEasyQs:level==="moderate"?mcDsaPremiumModerateQs:mcDsaPremiumHardQs;}else if(selectedCourse.code==="PGCP-MC"&&selectedModuleIndex===4){premiumQs=level==="easy"?mcWebJavaPremiumEasyQs:level==="moderate"?mcWebJavaPremiumModerateQs:mcWebJavaPremiumHardQs;}else if(selectedCourse.code==="PGCP-AC"&&selectedModuleIndex===1){premiumQs=level==="easy"?javaPremiumEasyQs:level==="moderate"?javaPremiumModerateQs:javaPremiumHardQs;}else if(selectedCourse.code==="PGCP-AC"&&selectedModuleIndex===2){premiumQs=level==="easy"?dsaJavaPremiumEasyQs:level==="moderate"?dsaJavaPremiumModerateQs:dsaJavaPremiumHardQs;}else if(selectedCourse.code==="PGCP-AC"&&selectedModuleIndex===3){premiumQs=level==="easy"?dbTechPremiumEasyQs:level==="moderate"?dbTechPremiumModerateQs:dbTechPremiumHardQs;}else if(selectedCourse.code==="PGCP-AC"&&selectedModuleIndex===4){const bank=level==="easy"?webTechPremiumEasyQs:level==="moderate"?webTechPremiumModerateQs:webTechPremiumHardQs;premiumQs=bank.map(([q,o,a,e])=>({q,o,a,e}));}else{premiumQs=level==="easy"?cppPremiumEasyQs:level==="moderate"?cppPremiumModerateQs:cppPremiumHardQs;}if(!Array.isArray(premiumQs)||premiumQs.length!==100){alert("This 100-question bank is not ready yet. Please try again in a moment.");return;}premiumQs=shuffleQuestionSet(premiumQs,Math.random());premiumIndex=0;premiumAnswers={};document.getElementById("premiumUnavailable").hidden=true;document.getElementById("premiumPracticePanel").hidden=false;renderPremium()}
 
 function getPremiumBanksForSelectedModule(){
 const c=selectedCourse.code,i=selectedModuleIndex;
@@ -950,6 +952,22 @@ if(c==="PGCP-BDA"&&i===1)return [bdaPythonRPremiumEasyQs,bdaPythonRPremiumModera
 if(c==="PGCP-BDA"&&i===2)return [javaProgrammingPremiumEasyQs,javaProgrammingPremiumModerateQs,javaProgrammingPremiumHardQs];
 if(c==="PGCP-BDA"&&i===3)return [bigDataTechnologiesPremiumEasyQs,bigDataTechnologiesPremiumModerateQs,bigDataTechnologiesPremiumHardQs];
 return null;
+}
+function shuffleQuestionSet(source,seed){
+const normalized=(Array.isArray(source)?source:[]).map(normalizePreviewQuestion);
+let state=(Math.floor((Number(seed)||Math.random())*4294967296)>>>0)||0x6d2b79f5;
+const random=()=>{state=(Math.imul(1664525,state)+1013904223)>>>0;return state/4294967296;};
+const validIndexes=normalized.map((q,i)=>q&&Array.isArray(q.o)&&q.o.length===4&&Number.isInteger(q.a)&&q.a>=0&&q.a<4?i:-1).filter(i=>i>=0);
+const targets=validIndexes.map((_,i)=>i%4);
+for(let i=targets.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[targets[i],targets[j]]=[targets[j],targets[i]];}
+const targetByIndex=new Map(validIndexes.map((index,i)=>[index,targets[i]]));
+return normalized.map((q,index)=>{
+if(!targetByIndex.has(index))return q;
+const target=targetByIndex.get(index),correct=q.o[q.a],distractors=q.o.filter((_,i)=>i!==q.a);
+for(let i=distractors.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[distractors[i],distractors[j]]=[distractors[j],distractors[i]];}
+let next=0;const options=Array.from({length:4},(_,i)=>i===target?correct:distractors[next++]);
+return {...q,o:options,a:target};
+});
 }
 function normalizePremiumMockQuestion(raw){
 if(Array.isArray(raw))return {q:raw[0]??"",o:Array.isArray(raw[1])?raw[1]:[],a:Number(raw[2]),e:raw[3]??""};
@@ -982,7 +1000,7 @@ const savedAttempt=getSavedPremiumMockAttempt(testIndex);
 if(savedAttempt){showPremiumMockReview(savedAttempt);return;}
 const banks=getPremiumBanksForSelectedModule();
 if(!banks||banks.some(bank=>!Array.isArray(bank)||bank.length!==100)){alert("All three 100-question difficulty banks must be ready before mock tests can start.");return;}
-premiumMockQs=[...takeRotated(banks[0],testIndex*9,14),...takeRotated(banks[1],testIndex*9,13),...takeRotated(banks[2],testIndex*9,13)].map(normalizePremiumMockQuestion);
+premiumMockQs=shuffleQuestionSet([...takeRotated(banks[0],testIndex*9,14),...takeRotated(banks[1],testIndex*9,13),...takeRotated(banks[2],testIndex*9,13)].map(normalizePremiumMockQuestion),Math.random());
 if(premiumMockQs.length!==40||premiumMockQs.some(q=>!q.q||q.o.length!==4||!Number.isInteger(q.a)||q.a<0||q.a>3)){alert("This mock test contains invalid question data and cannot be started.");return;}
 premiumMockIndex=0;premiumMockAnswers={};premiumMockMarked={};premiumMockSubmitted=false;premiumMockSeconds=3600;premiumMockDeadline=Date.now()+3600000;
 document.getElementById("premiumMockPanel").hidden=false;document.getElementById("premiumMockResult").hidden=true;
@@ -1039,7 +1057,7 @@ document.getElementById("premiumPrev").addEventListener("click",()=>{if(premiumI
 function finishPreview(){
  if(platformTimer){clearInterval(platformTimer);platformTimer=null}
  const answered=Object.keys(qa).length;
- const score=activeQs.reduce((sum,q,i)=>sum+(qa[i]===normalizePreviewQuestion(q).a?1:0),0);
+ const score=(previewQs.length?previewQs:activeQs.map(normalizePreviewQuestion)).reduce((sum,q,i)=>sum+(qa[i]===q.a?1:0),0);
  document.getElementById("quizResult").hidden=false;
  document.getElementById("quizResultScore").textContent=score+" / "+activeQs.length;
  document.getElementById("quizResultSummary").textContent="You answered "+answered+" of "+activeQs.length+" questions. "+(activeQs.length-answered)+" unanswered.";
