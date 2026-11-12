@@ -2,17 +2,22 @@
   "use strict";
   let examWindow = null;
   let syncHandle = null;
+  let examStateObserver = null;
 
   function openPremiumExamWindow() {
     if (examWindow && !examWindow.closed && examWindow.document.getElementById("mockWindowContent")) {
       examWindow.focus();
+      const panel = document.getElementById("premiumMockPanel");
+      const result = document.getElementById("premiumMockResult");
+      if (panel && result && panel.hidden && !result.hidden) { window.startPremiumMock(); syncFromOriginal(); }
       return;
     }
     if (!examWindow || examWindow.closed) {
       examWindow = window.open("", "cmcePremiumMockExam", "popup=yes,width=1280,height=900,resizable=yes,scrollbars=yes");
     }
     if (!examWindow) {
-      alert("Your browser blocked the exam window. Allow pop-ups for this site and click Start mock test again.");
+      window.startPremiumMock();
+      document.getElementById("premiumMockPanel")?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
 
@@ -54,15 +59,24 @@
     window.startPremiumMock();
     syncFromOriginal();
 
+    observeExamState();
+    // This timer only detects a closed popup. Exam UI updates are event-driven.
     syncHandle = window.setInterval(() => {
       if (!examWindow || examWindow.closed) {
         window.clearInterval(syncHandle);
         syncHandle = null;
+        if (examStateObserver) { examStateObserver.disconnect(); examStateObserver = null; }
         examWindow = null;
-        return;
       }
-      syncFromOriginal();
-    }, 350);
+    }, 1500);
+  }
+
+  function observeExamState() {
+    if (examStateObserver) examStateObserver.disconnect();
+    const targets = ["premiumMockPanel", "premiumMockResult", "premiumMockTimer"].map(id => document.getElementById(id)).filter(Boolean);
+    if (!targets.length || typeof MutationObserver === "undefined") return;
+    examStateObserver = new MutationObserver(() => syncFromOriginal());
+    targets.forEach(target => examStateObserver.observe(target, { subtree: true, childList: true, characterData: true, attributes: true }));
   }
 
   function syncFromOriginal() {
@@ -132,6 +146,7 @@
     const button = event.target instanceof Element ? event.target.closest("#startPremiumMock") : null;
     if (!button) return;
     event.preventDefault();
+    event.stopImmediatePropagation();
     if (window.__hasPremiumAccessGrant?.()) openPremiumExamWindow();
     else preparePremiumExamWindow();
   }, true);
