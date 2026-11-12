@@ -1008,9 +1008,9 @@ document.getElementById("premiumMockMarkedCount").textContent=Object.keys(premiu
 const pal=document.getElementById("premiumMockPalette");pal.replaceChildren();
 premiumMockQs.forEach((_,i)=>{const b=document.createElement("button");b.type="button";b.className="question-jump"+(i===premiumMockIndex?" current":"")+(premiumMockAnswers[i]!==undefined?" answered":"")+(premiumMockMarked[i]?" marked":"");b.textContent=i+1;b.disabled=premiumMockSubmitted;b.addEventListener("click",()=>{premiumMockIndex=i;renderPremiumMock()});pal.appendChild(b)});
 }
-function submitPremiumMock(autoSubmit=false){
+function submitPremiumMock(autoSubmit=false,skipConfirm=false){
 if(premiumMockSubmitted)return;
-if(!autoSubmit){const unanswered=40-Object.keys(premiumMockAnswers).length;const marked=Object.keys(premiumMockMarked).filter(k=>premiumMockMarked[k]).length;const msg="Submit this premium mock test?\\n\\nAnswered: "+Object.keys(premiumMockAnswers).length+"\\nUnanswered: "+unanswered+"\\nMarked for review: "+marked+"\\n\\nYou cannot change answers after submission.";if(!confirm(msg))return;}
+if(!autoSubmit&&!skipConfirm){const unanswered=40-Object.keys(premiumMockAnswers).length;const marked=Object.keys(premiumMockMarked).filter(k=>premiumMockMarked[k]).length;const msg="Submit this premium mock test?\\n\\nAnswered: "+Object.keys(premiumMockAnswers).length+"\\nUnanswered: "+unanswered+"\\nMarked for review: "+marked+"\\n\\nYou cannot change answers after submission.";if(!confirm(msg))return;}
 premiumMockSubmitted=true;if(premiumMockTimer){clearInterval(premiumMockTimer);premiumMockTimer=null;}
 const score=premiumMockQs.reduce((n,q,i)=>n+(premiumMockAnswers[i]===q.a?1:0),0);
 const testIndex=Number(document.getElementById("premiumMockSelect").value);
@@ -1022,6 +1022,9 @@ const review=document.getElementById("premiumMockReview");review.replaceChildren
 premiumMockQs.forEach((q,i)=>{const d=document.createElement("div");d.className="review-item";const h=document.createElement("strong");h.textContent="Q"+(i+1)+". "+q.q;const p=document.createElement("p");p.textContent="Your answer: "+(premiumMockAnswers[i]===undefined?"Not answered":String.fromCharCode(65+premiumMockAnswers[i])+". "+q.o[premiumMockAnswers[i]])+" · Correct answer: "+String.fromCharCode(65+q.a)+". "+q.o[q.a];const e=document.createElement("p");e.textContent=q.e;d.append(h,p,e);review.appendChild(d)});
 document.getElementById("premiumMockPanel").hidden=true;document.getElementById("premiumMockResult").hidden=false;
 }
+// Expose the real submission routine for the mirrored exam popup.
+window.submitPremiumMock = submitPremiumMock;
+
 document.getElementById("startPremiumMock").addEventListener("click",startPremiumMock);
 document.getElementById("premiumMockPrev").addEventListener("click",()=>{if(premiumMockIndex>0&&!premiumMockSubmitted){premiumMockIndex--;renderPremiumMock()}});
 document.getElementById("premiumMockNext").addEventListener("click",()=>{if(premiumMockIndex<39&&!premiumMockSubmitted){premiumMockIndex++;renderPremiumMock()}else if(premiumMockIndex===39&&!premiumMockSubmitted){const unanswered=40-Object.keys(premiumMockAnswers).length;if(confirm("You have reached the last question. Submit now?\\nUnanswered: "+unanswered))submitPremiumMock(false)}});

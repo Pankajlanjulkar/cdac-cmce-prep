@@ -2,17 +2,22 @@
   "use strict";
   let examWindow = null;
   let syncHandle = null;
+  let examStateObserver = null;
 
   function openPremiumExamWindow() {
     if (examWindow && !examWindow.closed && examWindow.document.getElementById("mockWindowContent")) {
       examWindow.focus();
+      const panel = document.getElementById("premiumMockPanel");
+      const result = document.getElementById("premiumMockResult");
+      if (panel && result && panel.hidden && !result.hidden) { window.startPremiumMock(); syncFromOriginal(); }
       return;
     }
     if (!examWindow || examWindow.closed) {
       examWindow = window.open("", "cmcePremiumMockExam", "popup=yes,width=1280,height=900,resizable=yes,scrollbars=yes");
     }
     if (!examWindow) {
-      alert("Your browser blocked the exam window. Allow pop-ups for this site and click Start mock test again.");
+      window.startPremiumMock();
+      document.getElementById("premiumMockPanel")?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
 
@@ -54,15 +59,24 @@
     window.startPremiumMock();
     syncFromOriginal();
 
+    observeExamState();
+    // This timer only detects a closed popup. Exam UI updates are event-driven.
     syncHandle = window.setInterval(() => {
       if (!examWindow || examWindow.closed) {
         window.clearInterval(syncHandle);
         syncHandle = null;
+        if (examStateObserver) { examStateObserver.disconnect(); examStateObserver = null; }
         examWindow = null;
-        return;
       }
-      syncFromOriginal();
-    }, 350);
+    }, 1500);
+  }
+
+  function observeExamState() {
+    if (examStateObserver) examStateObserver.disconnect();
+    const targets = ["premiumMockPanel", "premiumMockResult", "premiumMockTimer"].map(id => document.getElementById(id)).filter(Boolean);
+    if (!targets.length || typeof MutationObserver === "undefined") return;
+    examStateObserver = new MutationObserver(() => syncFromOriginal());
+    targets.forEach(target => examStateObserver.observe(target, { subtree: true, childList: true, characterData: true, attributes: true }));
   }
 
   function syncFromOriginal() {
@@ -88,12 +102,35 @@
       const clone = source.cloneNode(true);
       clone.hidden = source.hidden;
       clone.querySelectorAll("button").forEach((button, index) => {
+        // Submit from the popup by calling the exam engine directly. Forwarding
+        // a synthetic click to the hidden source button can be swallowed by
+        // popup event capture / mirrored-DOM replacement, leaving the test open.
+        if (button.id === "submitPremiumMock") {
+          button.addEventListener("click", event => {
+            event.preventDefault();
+            event.stopPropagation();
+            const appWindow = examWindow && !examWindow.closed ? examWindow.opener : window;
+            if (appWindow && typeof appWindow.submitPremiumMock === "function") {
+              appWindow.submitPremiumMock(false, true);
+              appWindow.setTimeout(() => {
+                syncFromOriginal();
+                const result = examWindow && !examWindow.closed && examWindow.document.getElementById("premiumMockResult");
+                if (result && !result.hidden) result.scrollIntoView({ behavior: "smooth", block: "start" });
+              }, 80);
+            } else {
+              const host = examWindow && !examWindow.closed && examWindow.document.getElementById("mockWindowContent");
+              if (host) host.insertAdjacentHTML("afterbegin", '<p role="alert" style="color:#b42318;font-weight:600">Submission could not reach the exam page. Please keep this window open and retry.</p>');
+            }
+          });
+          return;
+        }
         const originalById = button.id ? document.getElementById(button.id) : null;
         if (originalById) {
           button.addEventListener("click", event => {
             event.preventDefault();
+            event.stopPropagation();
             originalById.click();
-            syncFromOriginal();
+            window.setTimeout(syncFromOriginal, 0);
           });
         } else if (button.classList.contains("exam-option")) {
           button.addEventListener("click", event => {
@@ -132,6 +169,7 @@
     const button = event.target instanceof Element ? event.target.closest("#startPremiumMock") : null;
     if (!button) return;
     event.preventDefault();
+    event.stopImmediatePropagation();
     if (window.__hasPremiumAccessGrant?.()) openPremiumExamWindow();
     else preparePremiumExamWindow();
   }, true);
@@ -171,12 +209,35 @@
         });
         return;
       }
+      // The mock-tests list itself is also mirrored into a popup. Submit
+      // directly in the opener without a confirmation dialog there: a native
+      // confirm() belongs to the opener and can be hidden behind this popup.
+      if (button.id === "submitPremiumMock") {
+        button.addEventListener("click", event => {
+          event.preventDefault();
+          event.stopPropagation();
+          const appWindow = mocksWindow && !mocksWindow.closed ? mocksWindow.opener : window;
+          if (appWindow && typeof appWindow.submitPremiumMock === "function") {
+            appWindow.submitPremiumMock(false, true);
+            appWindow.setTimeout(() => {
+              syncMocksWindow();
+              const result = mocksWindow && !mocksWindow.closed && mocksWindow.document.getElementById("premiumMockResult");
+              if (result && !result.hidden) result.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 80);
+          } else {
+            const status = mocksWindow && !mocksWindow.closed && mocksWindow.document.getElementById("mockWindowContent");
+            if (status) status.insertAdjacentHTML("afterbegin", '<p role="alert" style="color:#b42318;font-weight:600">Submission could not reach the exam page. Please keep this window open and retry.</p>');
+          }
+        });
+        return;
+      }
       const original = button.id ? document.getElementById(button.id) : null;
       if (original) {
         button.addEventListener("click", event => {
           event.preventDefault();
+          event.stopPropagation();
           original.click();
-          syncMocksWindow();
+          window.setTimeout(syncMocksWindow, 0);
         });
       } else if (button.classList.contains("exam-option")) {
         button.addEventListener("click", event => {
