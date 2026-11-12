@@ -110,7 +110,7 @@
             event.preventDefault();
             event.stopPropagation();
             if (typeof window.submitPremiumMock === "function") {
-              window.submitPremiumMock(false);
+              window.submitPremiumMock(false, true);
               window.setTimeout(syncFromOriginal, 0);
             }
           });
