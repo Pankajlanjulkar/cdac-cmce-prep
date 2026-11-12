@@ -94,6 +94,7 @@ function setMode(next) {
   $("authGoogleDivider").hidden = mode === "reset";
 }
 function openAuth(next = "login") { setMode(next);if(!dialog.open) dialog.showModal(); }
+window.openStudentLogin = () => openAuth("login");
 
 authButton.addEventListener("click", async () => {
   if (currentSession?.user) {
