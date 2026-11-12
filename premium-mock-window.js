@@ -201,12 +201,27 @@
         });
         return;
       }
+      // The mock-tests list itself is also mirrored into a popup. Submit
+      // directly in the opener without a confirmation dialog there: a native
+      // confirm() belongs to the opener and can be hidden behind this popup.
+      if (button.id === "submitPremiumMock") {
+        button.addEventListener("click", event => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (typeof window.submitPremiumMock === "function") {
+            window.submitPremiumMock(false, true);
+            window.setTimeout(syncMocksWindow, 0);
+          }
+        });
+        return;
+      }
       const original = button.id ? document.getElementById(button.id) : null;
       if (original) {
         button.addEventListener("click", event => {
           event.preventDefault();
+          event.stopPropagation();
           original.click();
-          syncMocksWindow();
+          window.setTimeout(syncMocksWindow, 0);
         });
       } else if (button.classList.contains("exam-option")) {
         button.addEventListener("click", event => {
