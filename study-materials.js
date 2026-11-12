@@ -34,22 +34,44 @@ document.getElementById("studyViewerClose").addEventListener("click",closeStudyV
 studyViewer.addEventListener("click",e=>{if(e.target===studyViewer)closeStudyViewer();});
 document.addEventListener("contextmenu",e=>{if(studyViewer.classList.contains("open"))e.preventDefault();});
 async function refreshStudyMaterials(session){
-  if(!session?.user){studySection.style.display="none";return;}
-  const {data:purchases,error:pError}=await studySupabase.from("student_purchases").select("course_code,module_index,access_type").eq("student_id",session.user.id).eq("status","active");
-  if(pError||!purchases?.length){studySection.style.display="none";return;}
-  const {data:materials,error}=await studySupabase.from("study_materials").select("id,course_code,course_name,module_index,module_name,title").eq("is_published",true).order("display_order");
-  if(error){console.error("Study materials could not be loaded:",error.message);studySection.style.display="none";return;}
-  const eligible=(materials||[]).filter(m=>purchases.some(p=>p.course_code===m.course_code&&(p.access_type==="course"||(p.access_type==="module"&&m.module_index!==null&&Number(p.module_index)===Number(m.module_index)))));
+  const {data:materials,error}=await studySupabase.from("study_materials")
+    .select("id,course_code,course_name,module_index,module_name,title")
+    .eq("is_published",true).order("display_order");
+  if(error){console.error("Study materials catalogue could not be loaded:",error.message);studySection.style.display="none";return;}
+  let purchases=[];
+  if(session?.user){
+    const {data,error:pError}=await studySupabase.from("student_purchases")
+      .select("course_code,module_index,access_type").eq("student_id",session.user.id).eq("status","active");
+    if(!pError) purchases=data||[];
+  }
   studySection.style.display="block";
   const container=document.getElementById("studyMaterialItems");container.replaceChildren();
-  document.getElementById("studyMaterialsEmpty").hidden=eligible.length>0;
-  eligible.forEach(m=>{
+  const list=materials||[];
+  document.getElementById("studyMaterialsEmpty").hidden=list.length>0;
+  list.forEach(m=>{
+    const hasAccess=!!session?.user&&purchases.some(p=>
+      p.course_code===m.course_code&&(
+        p.access_type==="course"||
+        (p.access_type==="module"&&m.module_index!==null&&Number(p.module_index)===Number(m.module_index))
+      )
+    );
     const card=document.createElement("article");card.className="study-item";
     const title=document.createElement("strong");title.textContent=m.title;
     const module=document.createElement("small");module.textContent=m.course_name+" · "+m.module_name;
-    const button=document.createElement("button");button.type="button";button.textContent="Read online";
-    button.addEventListener("click",()=>openStudyMaterial(m,session));
-    card.append(title,module,button);container.append(card);
+    const status=document.createElement("small");status.textContent=hasAccess?"✓ Included in your purchase":(!session?.user?"Sign in and purchase to unlock":"🔒 Premium — purchase required");
+    status.style.fontWeight="700";status.style.color=hasAccess?"#176044":"#8a5a12";
+    const button=document.createElement("button");button.type="button";
+    button.textContent=hasAccess?"Read online":(!session?.user?"Student login":"Premium access required");
+    button.addEventListener("click",()=>{
+      if(hasAccess){openStudyMaterial(m,session);return;}
+      if(!session?.user){
+        if(typeof window.openStudentLogin==="function")window.openStudentLogin();
+        else alert("Please use Student Login in the website menu.");
+      }else{
+        alert("This PDF is not included in your active purchase. Select this module on the course page and purchase its premium access.");
+      }
+    });
+    card.append(title,module,status,button);container.append(card);
   });
 }
 async function openStudyMaterial(material,session){
