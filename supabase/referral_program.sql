@@ -82,10 +82,12 @@ begin
  select exists(select 1 from public.student_purchases where student_id=v_uid and provider='referral_reward' and status='active') into v_exists;
  if v_count<5 then raise exception 'You need five successful verified referrals'; end if;
  if v_exists then raise exception 'Referral reward has already been claimed'; end if;
- if p_course_code is null or length(trim(p_course_code))=0 then raise exception 'Choose a course'; end if;
+ if p_course_code is null or upper(trim(p_course_code)) not in ('PGCP-AC','PGCP-MC','PGCP-VLSI','PGCP-ESD','PGCP-AI','PGCP-BDA') then
+   raise exception 'Please select one of the six supported programmes';
+ end if;
  insert into public.student_purchases(student_id,course_code,module_index,access_type,amount_inr,status,provider,provider_reference)
- values(v_uid,trim(p_course_code),null,'course',0,'active','referral_reward','referral-'||v_uid::text);
- return jsonb_build_object('success',true,'course_code',trim(p_course_code));
+ values(v_uid,upper(trim(p_course_code)),null,'course',0,'active','referral_reward','referral-'||v_uid::text);
+ return jsonb_build_object('success',true,'course_code',upper(trim(p_course_code)));
 end; $$;
 
 revoke all on function public.get_or_create_referral_code() from public,anon;
