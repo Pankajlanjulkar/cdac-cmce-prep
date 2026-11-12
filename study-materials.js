@@ -39,7 +39,7 @@ async function refreshStudyMaterials(session){
   if(pError||!purchases?.length){studySection.style.display="none";return;}
   const {data:materials,error}=await studySupabase.from("study_materials").select("id,course_code,course_name,module_index,module_name,title").eq("is_published",true).order("display_order");
   if(error){console.error("Study materials could not be loaded:",error.message);studySection.style.display="none";return;}
-  const eligible=(materials||[]).filter(m=>purchases.some(p=>p.course_code===m.course_code&&(p.access_type==="course"||(p.access_type==="module"&&Number(p.module_index)===Number(m.module_index)))));
+  const eligible=(materials||[]).filter(m=>purchases.some(p=>p.course_code===m.course_code&&(p.access_type==="course"||(p.access_type==="module"&&m.module_index!==null&&Number(p.module_index)===Number(m.module_index)))));
   studySection.style.display="block";
   const container=document.getElementById("studyMaterialItems");container.replaceChildren();
   document.getElementById("studyMaterialsEmpty").hidden=eligible.length>0;
