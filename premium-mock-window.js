@@ -109,9 +109,17 @@
           button.addEventListener("click", event => {
             event.preventDefault();
             event.stopPropagation();
-            if (typeof window.submitPremiumMock === "function") {
-              window.submitPremiumMock(false, true);
-              window.setTimeout(syncFromOriginal, 0);
+            const appWindow = examWindow && !examWindow.closed ? examWindow.opener : window;
+            if (appWindow && typeof appWindow.submitPremiumMock === "function") {
+              appWindow.submitPremiumMock(false, true);
+              appWindow.setTimeout(() => {
+                syncFromOriginal();
+                const result = examWindow && !examWindow.closed && examWindow.document.getElementById("premiumMockResult");
+                if (result && !result.hidden) result.scrollIntoView({ behavior: "smooth", block: "start" });
+              }, 80);
+            } else {
+              const host = examWindow && !examWindow.closed && examWindow.document.getElementById("mockWindowContent");
+              if (host) host.insertAdjacentHTML("afterbegin", '<p role="alert" style="color:#b42318;font-weight:600">Submission could not reach the exam page. Please keep this window open and retry.</p>');
             }
           });
           return;
@@ -208,9 +216,17 @@
         button.addEventListener("click", event => {
           event.preventDefault();
           event.stopPropagation();
-          if (typeof window.submitPremiumMock === "function") {
-            window.submitPremiumMock(false, true);
-            window.setTimeout(syncMocksWindow, 0);
+          const appWindow = mocksWindow && !mocksWindow.closed ? mocksWindow.opener : window;
+          if (appWindow && typeof appWindow.submitPremiumMock === "function") {
+            appWindow.submitPremiumMock(false, true);
+            appWindow.setTimeout(() => {
+              syncMocksWindow();
+              const result = mocksWindow && !mocksWindow.closed && mocksWindow.document.getElementById("premiumMockResult");
+              if (result && !result.hidden) result.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 80);
+          } else {
+            const status = mocksWindow && !mocksWindow.closed && mocksWindow.document.getElementById("mockWindowContent");
+            if (status) status.insertAdjacentHTML("afterbegin", '<p role="alert" style="color:#b42318;font-weight:600">Submission could not reach the exam page. Please keep this window open and retry.</p>');
           }
         });
         return;
