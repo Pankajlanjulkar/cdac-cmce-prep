@@ -1022,6 +1022,9 @@ const review=document.getElementById("premiumMockReview");review.replaceChildren
 premiumMockQs.forEach((q,i)=>{const d=document.createElement("div");d.className="review-item";const h=document.createElement("strong");h.textContent="Q"+(i+1)+". "+q.q;const p=document.createElement("p");p.textContent="Your answer: "+(premiumMockAnswers[i]===undefined?"Not answered":String.fromCharCode(65+premiumMockAnswers[i])+". "+q.o[premiumMockAnswers[i]])+" · Correct answer: "+String.fromCharCode(65+q.a)+". "+q.o[q.a];const e=document.createElement("p");e.textContent=q.e;d.append(h,p,e);review.appendChild(d)});
 document.getElementById("premiumMockPanel").hidden=true;document.getElementById("premiumMockResult").hidden=false;
 }
+// Expose the real submission routine for the mirrored exam popup.
+window.submitPremiumMock = submitPremiumMock;
+
 document.getElementById("startPremiumMock").addEventListener("click",startPremiumMock);
 document.getElementById("premiumMockPrev").addEventListener("click",()=>{if(premiumMockIndex>0&&!premiumMockSubmitted){premiumMockIndex--;renderPremiumMock()}});
 document.getElementById("premiumMockNext").addEventListener("click",()=>{if(premiumMockIndex<39&&!premiumMockSubmitted){premiumMockIndex++;renderPremiumMock()}else if(premiumMockIndex===39&&!premiumMockSubmitted){const unanswered=40-Object.keys(premiumMockAnswers).length;if(confirm("You have reached the last question. Submit now?\\nUnanswered: "+unanswered))submitPremiumMock(false)}});
