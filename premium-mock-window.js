@@ -102,12 +102,27 @@
       const clone = source.cloneNode(true);
       clone.hidden = source.hidden;
       clone.querySelectorAll("button").forEach((button, index) => {
+        // Submit from the popup by calling the exam engine directly. Forwarding
+        // a synthetic click to the hidden source button can be swallowed by
+        // popup event capture / mirrored-DOM replacement, leaving the test open.
+        if (button.id === "submitPremiumMock") {
+          button.addEventListener("click", event => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (typeof window.submitPremiumMock === "function") {
+              window.submitPremiumMock(false);
+              window.setTimeout(syncFromOriginal, 0);
+            }
+          });
+          return;
+        }
         const originalById = button.id ? document.getElementById(button.id) : null;
         if (originalById) {
           button.addEventListener("click", event => {
             event.preventDefault();
+            event.stopPropagation();
             originalById.click();
-            syncFromOriginal();
+            window.setTimeout(syncFromOriginal, 0);
           });
         } else if (button.classList.contains("exam-option")) {
           button.addEventListener("click", event => {
