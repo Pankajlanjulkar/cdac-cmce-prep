@@ -537,7 +537,7 @@ function downloadCurrentPyq() {
     return;
   }
   const title = document.getElementById("pyqViewerTitle")?.textContent || "PGCP-AC-PYQ";
-  const filename = title.replace(/\\s*·\\s*PGCP-AC$/i, "").replace(/[^a-z0-9_-]+/gi, "_").replace(/^_+|_+$/g, "") || "PGCP-AC-PYQ";
+  const filename = title.replace(/\s*·\s*PGCP-AC$/i, "").replace(/[^a-z0-9_-]+/gi, "_").replace(/^_+|_+$/g, "") || "PGCP-AC-PYQ";
   const url = URL.createObjectURL(pyqPdfBlob);
   const link = document.createElement("a");
   link.href = url;
