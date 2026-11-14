@@ -318,27 +318,38 @@ async function startRazorpayPurchase(accessType){
     if($("buyCourseAccess"))$("buyCourseAccess").disabled=false;
   }
 }
-window.__startPremiumPurchaseFromPopup=async(accessType,targetId)=>{
+window.__createPremiumOrderForPopup=async(accessType)=>{
   const selection=window.getCMCESelection?.();
-  if(!selection){alert("Please select a course module in the original application tab first.");return;}
-  if(!currentSession?.user){openAuth("login");return;}
-  const target=document.getElementById(targetId);
-  if(!target){alert("Could not locate the premium item. Please refresh the application and try again.");return;}
-  try{
-    if(await hasPremiumAccess(selection)){
-      window.__premiumAccessGrant={course_code:selection.course_code,module_index:Number(selection.module_index),user_id:currentSession.user.id};
-      if(targetId==="openPremiumBankSection")window.openPremiumBankWindow?.();
-      else if(targetId==="openPremiumMocksSection")window.openPremiumMocksWindow?.();
-      else target.click();
-      return;
-    }
-    window.__pendingPremiumAction=target;
-    const d=ensurePaymentDialog();
-    $("paymentSelectionText").textContent=selection.course_name+" · "+selection.module_name+". "+(accessType==="course"?"Unlock every module in this course.":"Unlock this module only.");
-    paymentNotice("Continue secure checkout. After successful verification, your requested premium page will open automatically.");
-    if(!d.open)d.showModal();
-    await startRazorpayPurchase(accessType);
-  }catch(error){alert("Could not check premium access: "+(error.message||"Please try again."));}
+  if(!selection)throw new Error("Please select a course module in the original application tab first.");
+  if(!currentSession?.user){openAuth("login");throw new Error("Please sign in in the original application tab, then return here and try again.");}
+  if(!["module","course"].includes(accessType))throw new Error("Invalid purchase option.");
+  if(await hasPremiumAccess(selection))return {alreadyHasAccess:true};
+  const {data:orderData,error}=await supabase.functions.invoke("create-razorpay-order",{body:{
+    course_code:selection.course_code,
+    access_type:accessType,
+    module_index:accessType==="module"?selection.module_index:null
+  }});
+  if(error){let detail=error.message||"Could not create payment order.";try{const response=error.context;if(response&&typeof response.clone==="function"){const payload=await response.clone().json();if(payload?.error)detail=payload.error;}}catch{}throw new Error(detail);}
+  if(!orderData?.order_id||!orderData?.key_id)throw new Error(orderData?.error||"Payment order response is incomplete.");
+  return {orderData,selection:{course_name:selection.course_name,module_name:selection.module_name}};
+};
+window.__verifyPremiumPaymentFromPopup=async(response,targetId)=>{
+  if(!currentSession?.user)throw new Error("Your sign-in session is no longer active. Please sign in again.");
+  const {data:verification,error}=await supabase.functions.invoke("verify-razorpay-payment",{body:{
+    razorpay_order_id:response.razorpay_order_id,
+    razorpay_payment_id:response.razorpay_payment_id,
+    razorpay_signature:response.razorpay_signature
+  }});
+  if(error)throw new Error(error.message||"Payment verification failed.");
+  if(!verification?.success)throw new Error(verification?.error||"Payment could not be verified.");
+  const selection=window.getCMCESelection?.();
+  if(!selection||!(await hasPremiumAccess(selection)))throw new Error("Payment was received, but premium access could not yet be confirmed. Please refresh the original application tab or contact support.");
+  window.__premiumAccessGrant={course_code:selection.course_code,module_index:Number(selection.module_index),user_id:currentSession.user.id};
+  if(targetId==="openPremiumBankSection")window.openPremiumBankWindow?.();
+  else if(targetId==="openPremiumMocksSection")window.openPremiumMocksWindow?.();
+  else if(targetId==="startPremiumMock")document.getElementById("startPremiumMock")?.click();
+  else throw new Error("Unknown premium destination.");
+  return {success:true};
 };
 let pendingPlansPurchase=null;
 function showPlansPurchaseMessage(message){
