@@ -348,7 +348,8 @@
     if (bankWindow && !bankWindow.closed) { bankWindow.focus(); return true; }
     bankWindow = window.open("", "cmcePremiumQuestionBank", "popup=yes,width=1180,height=850,resizable=yes,scrollbars=yes");
     if (!bankWindow) { alert("Your browser blocked the question-bank window. Allow pop-ups for this site and click Open Question Bank again."); return false; }
-    showPurchaseGate(bankWindow,"Unlock the premium question bank","The premium question bank is available after purchasing this module or the complete course. Choose your access below.", "openPremiumBankSection");\n    return true;
+    showPurchaseGate(bankWindow,"Unlock the premium question bank","The premium question bank is available after purchasing this module or the complete course. Choose your access below.", "openPremiumBankSection");
+    return true;
   }
   function openPremiumBankWindow() {
     if (!bankWindow || bankWindow.closed) {
