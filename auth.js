@@ -454,18 +454,20 @@ const {data:{session}}=await supabase.auth.getSession();syncAuthUI(session);if(s
 
 
 // Premium PYQ access: any active complete-course purchase unlocks the PGCP-AC catalogue.
-// The server verifies entitlement for both listing and every short-lived PDF link.
+// PDFs are rendered page-by-page with PDF.js; no native download/print toolbar is provided.
 const pyqButton = document.getElementById("openPyqButton");
 const pyqStatus = document.getElementById("pyqStatus");
 const pyqList = document.getElementById("pyqPaperList");
+let pyqPdfDocument = null;
+let pyqRenderToken = 0;
 function setPyqStatus(message, isError = false) {
   if (!pyqStatus) return;
   pyqStatus.textContent = message;
   pyqStatus.style.background = isError ? "#fff0ef" : "#fff9e8";
   pyqStatus.style.color = isError ? "#a12b23" : "#745b19";
 }
-async function callPyq(body) {
-  const { data, error } = await supabase.functions.invoke("view-pyq-paper", { body });
+async function callPyq(body, options = {}) {
+  const { data, error } = await supabase.functions.invoke("view-pyq-paper", { body, ...options });
   if (error) {
     let message = error.message || "Could not access PYQ papers.";
     try {
@@ -479,6 +481,43 @@ async function callPyq(body) {
   }
   if (data?.error) throw new Error(data.error);
   return data;
+}
+async function ensurePdfJs() {
+  if (window.pdfjsLib) return window.pdfjsLib;
+  await new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    script.onload = resolve;
+    script.onerror = () => reject(new Error("The PDF viewer could not load. Check your internet connection and try again."));
+    document.head.append(script);
+  });
+  if (!window.pdfjsLib) throw new Error("The PDF viewer did not initialize.");
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  return window.pdfjsLib;
+}
+function ensurePyqViewer() {
+  let viewer = document.getElementById("pyqViewerDialog");
+  if (viewer) return viewer;
+  viewer = document.createElement("dialog");
+  viewer.id = "pyqViewerDialog";
+  viewer.className = "pyq-viewer-dialog";
+  viewer.innerHTML = `
+    <div class="pyq-viewer-toolbar">
+      <div><strong id="pyqViewerTitle">PGCP-AC PYQ Paper</strong><span id="pyqViewerPageStatus">Loading…</span></div>
+      <button class="btn secondary" id="pyqViewerClose" type="button">Close</button>
+    </div>
+    <div id="pyqViewerPages" class="pyq-viewer-pages" aria-label="PDF pages"></div>
+  `;
+  document.body.append(viewer);
+  viewer.querySelector("#pyqViewerClose").addEventListener("click", () => viewer.close());
+  viewer.addEventListener("close", () => {
+    pyqRenderToken++;
+    pyqPdfDocument = null;
+    viewer.querySelector("#pyqViewerPages").replaceChildren();
+    viewer.querySelector("#pyqViewerPageStatus").textContent = "";
+  });
+  viewer.addEventListener("contextmenu", event => event.preventDefault());
+  return viewer;
 }
 async function openPyqCatalogue() {
   if (!currentSession?.user) {
@@ -502,12 +541,12 @@ async function openPyqCatalogue() {
       const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = paper.paper_year ? "YEAR " + paper.paper_year : "PGCP-AC · REFERENCE PAPER";
       const title = document.createElement("h3"); title.textContent = paper.title;
       const meta = document.createElement("p"); meta.textContent = ["PGCP-AC", paper.subject].filter(Boolean).join(" · ");
-      const open = document.createElement("button"); open.className = "btn"; open.type = "button"; open.textContent = "View PDF";
+      const open = document.createElement("button"); open.className = "btn"; open.type = "button"; open.textContent = "Read paper";
       open.addEventListener("click", () => viewPyqPaper(paper));
       card.append(tag, title, meta, open); pyqList.append(card);
     });
     pyqList.hidden = false;
-    setPyqStatus("PGCP-AC papers only · Premium access verified. Select a paper to open it.");
+    setPyqStatus("PGCP-AC papers only · Premium access verified. Select a paper to read it.");
   } catch (error) {
     setPyqStatus(error.message || "Could not verify PYQ access.", true);
     if (/purchase any complete course/i.test(error.message || "")) {
@@ -519,38 +558,54 @@ async function openPyqCatalogue() {
   }
 }
 async function viewPyqPaper(paper) {
-  // Open a tab synchronously inside the tap handler. Mobile browsers often cannot
-  // display a blob URL inside an iframe, but their native PDF viewer can open HTTPS URLs.
-  const pdfTab = window.open("about:blank", "_blank");
-  if (pdfTab) {
-    pdfTab.document.title = "Loading PYQ PDF…";
-    pdfTab.document.body.innerHTML = '<p style="font:16px system-ui;padding:24px">Loading your PDF…</p>';
-  }
+  const viewer = ensurePyqViewer();
+  const pages = viewer.querySelector("#pyqViewerPages");
+  const pageStatus = viewer.querySelector("#pyqViewerPageStatus");
+  const token = ++pyqRenderToken;
+  pages.replaceChildren();
+  viewer.querySelector("#pyqViewerTitle").textContent = paper.title + " · PGCP-AC";
+  pageStatus.textContent = "Loading secure viewer…";
+  if (!viewer.open) viewer.showModal();
   try {
-    setPyqStatus("Preparing " + paper.title + "…");
-    const result = await callPyq({ action: "view", paper_id: paper.id });
-    if (!result?.signed_url) throw new Error("The PDF link was not returned. Please try again.");
-    if (pdfTab && !pdfTab.closed) {
-      pdfTab.location.replace(result.signed_url);
-      setPyqStatus("PDF opened in a new tab. On mobile, use the browser's PDF viewer.");
-    } else {
-      setPyqStatus("Your browser blocked the PDF tab. Tap the link below to open it.", true);
-      let link = document.getElementById("pyqMobileFallbackLink");
-      if (!link) {
-        link = document.createElement("a");
-        link.id = "pyqMobileFallbackLink";
-        link.className = "btn";
-        link.target = "_blank";
-        link.rel = "noopener";
-        link.style.display = "inline-block";
-        link.style.marginTop = "10px";
-        pyqStatus.insertAdjacentElement("afterend", link);
-      }
-      link.href = result.signed_url;
-      link.textContent = "Open " + paper.title + " PDF";
+    const pdfjs = await ensurePdfJs();
+    const blob = await callPyq({ action: "view", paper_id: paper.id }, { responseType: "blob" });
+    if (!(blob instanceof Blob) || !blob.size) throw new Error("The PDF file is unavailable.");
+    if (blob.type && !blob.type.toLowerCase().includes("pdf")) {
+      let message = "The server did not return a PDF.";
+      try { const payload = JSON.parse(await blob.text()); if (payload.error) message = payload.error; } catch {}
+      throw new Error(message);
     }
+    const buffer = await blob.arrayBuffer();
+    const loadingTask = pdfjs.getDocument({ data: new Uint8Array(buffer) });
+    pyqPdfDocument = await loadingTask.promise;
+    if (token !== pyqRenderToken) return;
+    pageStatus.textContent = pyqPdfDocument.numPages + " pages · View only";
+    for (let pageNumber = 1; pageNumber <= pyqPdfDocument.numPages; pageNumber++) {
+      if (token !== pyqRenderToken) return;
+      const page = await pyqPdfDocument.getPage(pageNumber);
+      const baseViewport = page.getViewport({ scale: 1 });
+      const availableWidth = Math.max(280, pages.clientWidth - 24);
+      const scale = Math.min(2, availableWidth / baseViewport.width);
+      const viewport = page.getViewport({ scale });
+      const wrapper = document.createElement("div");
+      wrapper.className = "pyq-pdf-page";
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d", { alpha: false });
+      canvas.width = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      canvas.style.width = viewport.width + "px";
+      canvas.style.height = viewport.height + "px";
+      canvas.addEventListener("contextmenu", event => event.preventDefault());
+      wrapper.append(canvas);
+      pages.append(wrapper);
+      await page.render({ canvasContext: context, viewport }).promise;
+      page.cleanup();
+    }
+    setPyqStatus("PDF opened in the view-only reader. Download and print controls are not provided.");
   } catch (error) {
-    if (pdfTab && !pdfTab.closed) pdfTab.close();
+    if (token !== pyqRenderToken) return;
+    pageStatus.textContent = "Could not open paper";
+    pages.textContent = error.message || "Could not open the PDF.";
     setPyqStatus(error.message || "Could not open the PDF.", true);
   }
 }
