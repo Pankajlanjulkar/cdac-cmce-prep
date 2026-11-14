@@ -169,7 +169,42 @@
       button:disabled{opacity:.65;cursor:wait}.note{font-size:13px;margin-top:18px}
       @media(max-width:560px){body{padding:12px}.choices{grid-template-columns:1fr}main{padding:22px}}
     </style></head><body><main><div style="font-size:12px;letter-spacing:2px;font-weight:700;color:#08756b;margin-bottom:12px">CDAC CMCE PREMIUM ACCESS</div><h2>${title}</h2><p>${message}</p><p><strong>Choose how you want to unlock access:</strong></p><div class="choices"><button id="popupBuyModule" type="button">Unlock this module · ₹10</button><button id="popupBuyCourse" class="secondary" type="button">Unlock complete course · ₹40</button></div><p id="popupStatus" role="status" class="note">Sign in and payment are securely handled by the original application tab. After payment verification, this window will open your selected content automatically.</p></main><script>
-      const send=async(type)=>{const status=document.getElementById("popupStatus");const buttons=[document.getElementById("popupBuyModule"),document.getElementById("popupBuyCourse")];buttons.forEach(b=>b.disabled=true);status.textContent="Opening secure purchase…";try{if(!window.opener||window.opener.closed||typeof window.opener.__startPremiumPurchaseFromPopup!=="function")throw new Error("Return to the application tab, refresh it, and open this page again.");await window.opener.__startPremiumPurchaseFromPopup(type,"${targetId}");status.textContent="Continue sign-in or secure checkout in the original application tab. This window will update after access is verified.";}catch(error){status.textContent=error.message||"Could not start purchase.";buttons.forEach(b=>b.disabled=false);}};
+      let checkoutBusy=false;
+      const send=async(type)=>{
+        if(checkoutBusy)return;checkoutBusy=true;
+        const status=document.getElementById("popupStatus");
+        const buttons=[document.getElementById("popupBuyModule"),document.getElementById("popupBuyCourse")];
+        buttons.forEach(b=>b.disabled=true);status.textContent="Creating your secure payment order…";
+        try{
+          if(!window.opener||window.opener.closed||typeof window.opener.__createPremiumOrderForPopup!=="function")throw new Error("Return to the application tab, refresh it, and open this page again.");
+          const result=await window.opener.__createPremiumOrderForPopup(type);
+          if(result.alreadyHasAccess){status.textContent="Premium access is already active. Opening your content…";if("${targetId}"==="openPremiumBankSection")window.opener.openPremiumBankWindow();else if("${targetId}"==="openPremiumMocksSection")window.opener.openPremiumMocksWindow();else window.opener.document.getElementById("startPremiumMock")?.click();return;}
+          const order=result.orderData;
+          status.textContent="Loading Razorpay checkout in this window…";
+          if(!window.Razorpay){
+            await new Promise((resolve,reject)=>{const script=document.createElement("script");script.src="https://checkout.razorpay.com/v1/checkout.js";script.async=true;script.onload=resolve;script.onerror=()=>reject(new Error("Could not load Razorpay checkout."));document.head.appendChild(script);});
+          }
+          const checkout=new window.Razorpay({
+            key:order.key_id,amount:order.amount,currency:order.currency,order_id:order.order_id,
+            name:order.name||"CDAC CMCE Prep",description:order.description||"Premium access",
+            prefill:order.prefill||{},theme:{color:"#126b61"},
+            modal:{ondismiss:()=>{status.textContent="Checkout closed. No premium access has been activated.";buttons.forEach(b=>b.disabled=false);checkoutBusy=false;}},
+            handler:async response=>{
+              status.textContent="Payment received. Verifying securely…";
+              try{
+                if(!window.opener||window.opener.closed)throw new Error("Keep the original application tab open to verify payment.");
+                await window.opener.__verifyPremiumPaymentFromPopup(response,"${targetId}");
+                status.textContent="Payment verified successfully. Your premium content is opening…";
+                document.querySelector("main").innerHTML='<h2>Payment successful!</h2><p>Your premium access is active. Your requested content is opening in the original popup.</p>';
+              }catch(error){status.textContent=error.message||"Payment verification failed. Please contact support if money was deducted.";}
+              buttons.forEach(b=>b.disabled=false);checkoutBusy=false;
+            }
+          });
+          checkout.on("payment.failed",response=>{status.textContent=response.error?.description||"Payment failed. You can try again.";buttons.forEach(b=>b.disabled=false);checkoutBusy=false;});
+          checkout.open();
+          status.textContent="Complete your payment in the Razorpay window above.";
+        }catch(error){status.textContent=error.message||"Could not start purchase.";buttons.forEach(b=>b.disabled=false);checkoutBusy=false;}
+      };
       document.getElementById("popupBuyModule").addEventListener("click",()=>send("module"));document.getElementById("popupBuyCourse").addEventListener("click",()=>send("course"));
     </script></body></html>`);
     targetWindow.document.close();
