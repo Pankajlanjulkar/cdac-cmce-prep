@@ -20,6 +20,7 @@ studyStyle.textContent = `
 .study-viewer-frame{border:0;flex:1;width:100%;background:#eef3f5}.study-empty{color:#60717c;font-size:14px;margin-top:12px}
 @media(max-width:540px){#premiumStudyMaterials{padding:0 16px}.study-viewer{padding:0}.study-viewer-panel{height:100vh;border-radius:0}}
 `;
+studyStyle.textContent += "\n@media(max-width:640px){\n #premiumStudyMaterials{padding:0 14px}\n .study-banner{padding:15px}\n .study-banner-head{align-items:flex-start}\n .study-items{grid-template-columns:minmax(0,1fr)}\n .study-item{padding:14px}\n .study-item button{width:100%;min-height:44px}\n .study-viewer{padding:0}\n .study-viewer-panel{width:100%;height:100dvh;max-height:100dvh;border-radius:0}\n .study-viewer-head{padding:10px 12px}\n}\n";
 document.head.append(studyStyle);
 const studySection=document.createElement("section");
 studySection.id="premiumStudyMaterials";
