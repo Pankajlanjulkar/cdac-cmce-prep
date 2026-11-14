@@ -157,13 +157,29 @@
 
   // Capture before the original Start button handler. The existing exam logic
   // still runs unchanged, but its interface is mirrored into a separate window.
+  function showPurchaseGate(targetWindow,title,message,targetId){
+    targetWindow.document.open();
+    targetWindow.document.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>
+      *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px;font:16px Arial,sans-serif;background:#f4f7f7;color:#203735}
+      main{width:min(100%,760px);background:#fff;padding:clamp(22px,5vw,36px);border:1px solid #dce5e3;border-radius:16px;box-shadow:0 12px 35px rgba(20,55,50,.07)}
+      h2{margin:0 0 12px;font-size:clamp(23px,4vw,30px)}p{line-height:1.55;color:#536563}
+      .choices{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:24px 0 12px}
+      button{min-height:48px;padding:12px 16px;border:0;border-radius:9px;background:#08756b;color:#fff;font-weight:700;font-size:15px;cursor:pointer}
+      button.secondary{background:#e8f2f0;color:#174b45;border:1px solid #c8dfda}
+      button:disabled{opacity:.65;cursor:wait}.note{font-size:13px;margin-top:18px}
+      @media(max-width:560px){body{padding:12px}.choices{grid-template-columns:1fr}main{padding:22px}}
+    </style></head><body><main><div style="font-size:12px;letter-spacing:2px;font-weight:700;color:#08756b;margin-bottom:12px">CDAC CMCE PREMIUM ACCESS</div><h2>${title}</h2><p>${message}</p><p><strong>Choose how you want to unlock access:</strong></p><div class="choices"><button id="popupBuyModule" type="button">Unlock this module · ₹10</button><button id="popupBuyCourse" class="secondary" type="button">Unlock complete course · ₹40</button></div><p id="popupStatus" role="status" class="note">Sign in and payment are securely handled by the original application tab. After payment verification, this window will open your selected content automatically.</p></main><script>
+      const send=async(type)=>{const status=document.getElementById("popupStatus");const buttons=[document.getElementById("popupBuyModule"),document.getElementById("popupBuyCourse")];buttons.forEach(b=>b.disabled=true);status.textContent="Opening secure purchase…";try{if(!window.opener||window.opener.closed||typeof window.opener.__startPremiumPurchaseFromPopup!=="function")throw new Error("Return to the application tab, refresh it, and open this page again.");await window.opener.__startPremiumPurchaseFromPopup(type,"${targetId}");status.textContent="Continue sign-in or secure checkout in the original application tab. This window will update after access is verified.";}catch(error){status.textContent=error.message||"Could not start purchase.";buttons.forEach(b=>b.disabled=false);}};
+      document.getElementById("popupBuyModule").addEventListener("click",()=>send("module"));document.getElementById("popupBuyCourse").addEventListener("click",()=>send("course"));
+    </script></body></html>`);
+    targetWindow.document.close();
+  }
+
   function preparePremiumExamWindow() {
     if (examWindow && !examWindow.closed) { examWindow.focus(); return; }
     examWindow = window.open("", "cmcePremiumMockExam", "popup=yes,width=1280,height=900,resizable=yes,scrollbars=yes");
     if (!examWindow) { alert("Your browser blocked the exam window. Allow pop-ups for this site and try again."); return; }
-    examWindow.document.open();
-    examWindow.document.write('<!doctype html><html><head><title>CDAC Premium Mock Test</title><style>body{font:16px Arial,sans-serif;background:#f4f7f7;color:#263b3b;padding:32px}main{max-width:760px;margin:10vh auto;background:#fff;padding:28px;border:1px solid #dce5e3;border-radius:14px}</style></head><body><main><h2>Checking premium access…</h2><p>Complete sign-in and purchase in the original application tab to start this test.</p></main></body></html>');
-    examWindow.document.close();
+    showPurchaseGate(examWindow,"Unlock this premium mock test","This mock test is part of the premium question bank. Choose module-only or complete-course access below.", "startPremiumMock");
   }
   document.addEventListener("click", event => {
     const button = event.target instanceof Element ? event.target.closest("#startPremiumMock") : null;
@@ -314,9 +330,7 @@
     if (mocksWindow && !mocksWindow.closed) { mocksWindow.focus(); return; }
     mocksWindow = window.open("", "cmcePremiumMocks", "popup=yes,width=1280,height=900,resizable=yes,scrollbars=yes");
     if (!mocksWindow) { alert("Your browser blocked the new window. Allow pop-ups for this site and click Open Mock Tests again."); return; }
-    mocksWindow.document.open();
-    mocksWindow.document.write('<!doctype html><html><head><title>CDAC Premium Mock Tests</title><style>body{font:16px Arial,sans-serif;background:#f4f7f7;color:#263b3b;padding:32px}main{max-width:760px;margin:10vh auto;background:#fff;padding:28px;border:1px solid #dce5e3;border-radius:14px}</style></head><body><main><h2>Checking premium access…</h2><p>Sign in and purchase this module or the complete course in the original application tab to unlock mock tests.</p></main></body></html>');
-    mocksWindow.document.close();
+    showPurchaseGate(mocksWindow,"Unlock premium mock tests","Premium mock tests require an active purchase. Choose module-only or complete-course access below.", "openPremiumMocksSection");
   }
   window.openPremiumMocksWindow = openPremiumMocksWindow;
   document.addEventListener("click", event => {
@@ -334,9 +348,7 @@
     if (bankWindow && !bankWindow.closed) { bankWindow.focus(); return true; }
     bankWindow = window.open("", "cmcePremiumQuestionBank", "popup=yes,width=1180,height=850,resizable=yes,scrollbars=yes");
     if (!bankWindow) { alert("Your browser blocked the question-bank window. Allow pop-ups for this site and click Open Question Bank again."); return false; }
-    bankWindow.document.open();
-    bankWindow.document.write('<!doctype html><html><head><title>CDAC Premium Question Bank</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font:16px Arial,sans-serif;background:#f4f7f7;color:#263b3b;padding:32px}main{max-width:760px;margin:10vh auto;background:white;padding:28px;border:1px solid #dce5e3;border-radius:14px}</style></head><body><main><h2>Checking premium access…</h2><p>Please complete sign-in or purchase in the original application tab. The question bank will open here once access is confirmed.</p></main></body></html>');
-    bankWindow.document.close();
+    showPurchaseGate(bankWindow,"Unlock the premium question bank","The premium question bank is available after purchasing this module or the complete course. Choose your access below.", "openPremiumBankSection");
     return true;
   }
   function openPremiumBankWindow() {

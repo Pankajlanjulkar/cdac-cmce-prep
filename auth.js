@@ -318,6 +318,28 @@ async function startRazorpayPurchase(accessType){
     if($("buyCourseAccess"))$("buyCourseAccess").disabled=false;
   }
 }
+window.__startPremiumPurchaseFromPopup=async(accessType,targetId)=>{
+  const selection=window.getCMCESelection?.();
+  if(!selection){alert("Please select a course module in the original application tab first.");return;}
+  if(!currentSession?.user){openAuth("login");return;}
+  const target=document.getElementById(targetId);
+  if(!target){alert("Could not locate the premium item. Please refresh the application and try again.");return;}
+  try{
+    if(await hasPremiumAccess(selection)){
+      window.__premiumAccessGrant={course_code:selection.course_code,module_index:Number(selection.module_index),user_id:currentSession.user.id};
+      if(targetId==="openPremiumBankSection")window.openPremiumBankWindow?.();
+      else if(targetId==="openPremiumMocksSection")window.openPremiumMocksWindow?.();
+      else target.click();
+      return;
+    }
+    window.__pendingPremiumAction=target;
+    const d=ensurePaymentDialog();
+    $("paymentSelectionText").textContent=selection.course_name+" · "+selection.module_name+". "+(accessType==="course"?"Unlock every module in this course.":"Unlock this module only.");
+    paymentNotice("Continue secure checkout. After successful verification, your requested premium page will open automatically.");
+    if(!d.open)d.showModal();
+    await startRazorpayPurchase(accessType);
+  }catch(error){alert("Could not check premium access: "+(error.message||"Please try again."));}
+};
 let pendingPlansPurchase=null;
 function showPlansPurchaseMessage(message){
   let box=$("plansPurchaseNotice");
