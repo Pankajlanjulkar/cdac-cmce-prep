@@ -39,15 +39,14 @@ Deno.serve(async (req) => {
       const { data: paper, error } = await admin.from("pyq_papers")
         .select("title,storage_path").eq("id", body.paper_id).eq("is_published", true).maybeSingle();
       if (error || !paper) return json({ error: "Paper not found or not published." }, 404);
-      const { data: file, error: fileError } = await admin.storage.from("study-materials").download(paper.storage_path);
-      if (fileError || !file) return json({ error: "Paper file is temporarily unavailable." }, 404);
-      const safeName = String(paper.title || "pyq-paper").replace(/[^a-z0-9 _.-]/gi, "").slice(0, 90) || "pyq-paper";
-      return new Response(file.stream(), { status: 200, headers: {
-        ...cors, "Content-Type": "application/pdf",
-        "Content-Disposition": 'inline; filename="' + safeName + '.pdf"',
-        "Cache-Control": "private, no-store, max-age=0",
-        "X-Content-Type-Options": "nosniff",
-      }});
+      // Return a short-lived signed HTTPS URL instead of streaming a Blob.
+      // Mobile Safari/Chrome can hand this URL to their native PDF viewer, avoiding
+      // unreliable blob: URLs embedded in iframes.
+      const { data: signed, error: signedError } = await admin.storage
+        .from("study-materials")
+        .createSignedUrl(paper.storage_path, 600);
+      if (signedError || !signed?.signedUrl) return json({ error: "Paper file is temporarily unavailable." }, 404);
+      return json({ success: true, signed_url: signed.signedUrl, expires_in: 600 });
     }
     return json({ error: "Choose a valid PYQ action." }, 400);
   } catch (error) {
