@@ -451,3 +451,108 @@ supabase.auth.onAuthStateChange(async (event,session)=>{
   }
 });
 const {data:{session}}=await supabase.auth.getSession();syncAuthUI(session);if(session?.user)await claimThisDevice(session);
+
+
+// Premium PYQ access: any active complete-course purchase unlocks the shared catalogue.
+// The server checks entitlements for both catalogue listing and each PDF request.
+const pyqButton = document.getElementById("openPyqButton");
+const pyqStatus = document.getElementById("pyqStatus");
+const pyqList = document.getElementById("pyqPaperList");
+let pyqViewerUrl = null;
+function setPyqStatus(message, isError = false) {
+  if (!pyqStatus) return;
+  pyqStatus.textContent = message;
+  pyqStatus.style.background = isError ? "#fff0ef" : "#fff9e8";
+  pyqStatus.style.color = isError ? "#a12b23" : "#745b19";
+}
+function ensurePyqViewer() {
+  let viewer = document.getElementById("pyqViewerDialog");
+  if (viewer) return viewer;
+  viewer = document.createElement("dialog");
+  viewer.id = "pyqViewerDialog";
+  viewer.style.cssText = "width:min(1000px,calc(100% - 20px));max-width:1000px;height:90vh;padding:14px";
+  viewer.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px"><strong id="pyqViewerTitle">PYQ Paper</strong><button class="btn secondary" id="pyqViewerClose" type="button">Close</button></div><iframe id="pyqViewerFrame" title="Previous year question paper" style="width:100%;height:calc(100% - 48px);border:1px solid var(--line);border-radius:8px"></iframe>';
+  document.body.append(viewer);
+  viewer.querySelector("#pyqViewerClose").addEventListener("click", () => viewer.close());
+  viewer.addEventListener("close", () => {
+    viewer.querySelector("#pyqViewerFrame").src = "about:blank";
+    if (pyqViewerUrl) URL.revokeObjectURL(pyqViewerUrl);
+    pyqViewerUrl = null;
+  });
+  return viewer;
+}
+async function callPyq(body) {
+  const { data, error } = await supabase.functions.invoke("view-pyq-paper", { body });
+  if (error) {
+    let message = error.message || "Could not access PYQ papers.";
+    try {
+      const response = error.context;
+      if (response && typeof response.clone === "function") {
+        const payload = await response.clone().json();
+        if (payload?.error) message = payload.error;
+      }
+    } catch {}
+    throw new Error(message);
+  }
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+async function openPyqCatalogue() {
+  if (!currentSession?.user) {
+    openAuth("login");
+    setPyqStatus("Please log in, then purchase any complete course to access PYQ.", true);
+    return;
+  }
+  if (pyqButton) { pyqButton.disabled = true; pyqButton.textContent = "Checking access…"; }
+  setPyqStatus("Verifying your course purchase…");
+  try {
+    const result = await callPyq({ action: "list" });
+    pyqList.replaceChildren();
+    if (!result.papers?.length) {
+      setPyqStatus("Your premium PYQ access is active. Authorized papers will appear here when published.");
+      pyqList.hidden = false;
+      return;
+    }
+    result.papers.forEach(paper => {
+      const card = document.createElement("article");
+      card.className = "course";
+      const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = paper.paper_year ? "YEAR " + paper.paper_year : "REFERENCE PAPER";
+      const title = document.createElement("h3"); title.textContent = paper.title;
+      const meta = document.createElement("p"); meta.textContent = [paper.programme, paper.subject].filter(Boolean).join(" · ");
+      const open = document.createElement("button"); open.className = "btn"; open.type = "button"; open.textContent = "View PDF";
+      open.addEventListener("click", () => viewPyqPaper(paper));
+      card.append(tag, title, meta, open); pyqList.append(card);
+    });
+    pyqList.hidden = false;
+    setPyqStatus("Premium access verified. Select a paper to view it securely.");
+  } catch (error) {
+    setPyqStatus(error.message || "Could not verify PYQ access.", true);
+    if (/purchase any complete course/i.test(error.message || "")) {
+      setPyqStatus("Purchase any complete course and access PYQ. Existing complete-course purchasers are eligible too.", true);
+    }
+    pyqList.hidden = true;
+  } finally {
+    if (pyqButton) { pyqButton.disabled = false; pyqButton.textContent = "Explore PYQ Papers →"; }
+  }
+}
+async function viewPyqPaper(paper) {
+  try {
+    setPyqStatus("Opening " + paper.title + "…");
+    const { data, error } = await supabase.functions.invoke("view-pyq-paper", {
+      body: { action: "view", paper_id: paper.id },
+      responseType: "blob"
+    });
+    if (error) throw new Error(error.message || "Could not load this PDF.");
+    if (!(data instanceof Blob) || data.size === 0) throw new Error("The PDF file is unavailable.");
+    if (pyqViewerUrl) URL.revokeObjectURL(pyqViewerUrl);
+    pyqViewerUrl = URL.createObjectURL(data);
+    const viewer = ensurePyqViewer();
+    viewer.querySelector("#pyqViewerTitle").textContent = paper.title;
+    viewer.querySelector("#pyqViewerFrame").src = pyqViewerUrl;
+    if (!viewer.open) viewer.showModal();
+    setPyqStatus("PDF opened in the secure viewer.");
+  } catch (error) {
+    setPyqStatus(error.message || "Could not open the PDF.", true);
+  }
+}
+pyqButton?.addEventListener("click", openPyqCatalogue);
