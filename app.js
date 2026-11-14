@@ -847,32 +847,19 @@ return {q:raw.q??raw.question??raw.text??raw.prompt??"",o:raw.o??raw.options??ra
 }
 let previewQs=[];
 function showQ(){
- const total=previewQs.length;
- const q=previewQs[qi];
- document.getElementById("quizProgress").textContent="Question "+(qi+1)+" of "+total;
+ const q=previewQs[qi]||normalizePreviewQuestion(activeQs[qi]);
+ document.getElementById("quizProgress").textContent="Question "+(qi+1)+" of "+activeQs.length;
  const questionEl=document.getElementById("quizQuestion");
- questionEl.textContent=q.q;
+ questionEl.textContent=q.q||"Question content is unavailable. Please report this module so its question data can be corrected.";
  questionEl.hidden=false;
  const box=document.getElementById("quizOptions");box.replaceChildren();box.hidden=false;
  q.o.forEach((v,i)=>{const btn=document.createElement("button");btn.className="quiz-option"+(qa[qi]===i?" selected":"");btn.textContent=String.fromCharCode(65+i)+". "+v;btn.disabled=!platformTestMode&&qa[qi]!==undefined;btn.addEventListener("click",()=>{qa[qi]=i;showQ()});box.appendChild(btn)});
  const fb=document.getElementById("quizFeedback");fb.hidden=platformTestMode||qa[qi]===undefined;
- if(!fb.hidden)fb.textContent=(qa[qi]===q.a?"Correct. ":"Incorrect. Correct answer: "+String.fromCharCode(65+q.a)+". "+q.o[q.a]+". ")+q.e;
+ if(!fb.hidden)fb.textContent=(qa[qi]===q.a?"Correct. ":"Incorrect. Correct answer: "+String.fromCharCode(65+q.a)+". "+(q.o[q.a]??"")+". ")+q.e;
  document.getElementById("quizPrev").disabled=qi===0;
- document.getElementById("quizNext").textContent=qi===total-1?"Finish preview":"Next question";
+ document.getElementById("quizNext").textContent=qi===activeQs.length-1?"Finish preview":"Next question";
 }
-function startPreview(){
- if(platformTimer){clearInterval(platformTimer);platformTimer=null}
- const validQuestions=(Array.isArray(activeQs)?activeQs:[]).map(normalizePreviewQuestion).filter(q=>
-  typeof q.q==="string"&&q.q.trim().length>0&&Array.isArray(q.o)&&q.o.length===4&&q.o.every(option=>option!==null&&String(option).trim().length>0)&&Number.isInteger(q.a)&&q.a>=0&&q.a<4
- );
- previewQs=shuffleQuestionSet(validQuestions.slice(0,20),Math.random());
- qi=0;Object.keys(qa).forEach(k=>delete qa[k]);
- document.getElementById("quizPanel").hidden=false;document.getElementById("quizResult").hidden=true;
- const timer=document.getElementById("quizTimer");timer.hidden=!platformTestMode;
- if(platformTestMode){platformSeconds=3600;updatePlatformTimer();platformTimer=setInterval(()=>{platformSeconds--;updatePlatformTimer();if(platformSeconds<=0)finishPreview()},1000)}
- if(!previewQs.length){document.getElementById("quizQuestion").textContent="Preview questions are temporarily unavailable for this module.";document.getElementById("quizQuestion").hidden=false;document.getElementById("quizOptions").replaceChildren();document.getElementById("quizOptions").hidden=false;return}
- showQ();
-}
+function startPreview(){if(platformTimer){clearInterval(platformTimer);platformTimer=null}previewQs=shuffleQuestionSet(activeQs,Math.random());qi=0;Object.keys(qa).forEach(k=>delete qa[k]);document.getElementById("quizPanel").hidden=false;document.getElementById("quizResult").hidden=true;const timer=document.getElementById("quizTimer");timer.hidden=!platformTestMode;if(platformTestMode){platformSeconds=3600;updatePlatformTimer();platformTimer=setInterval(()=>{platformSeconds--;updatePlatformTimer();if(platformSeconds<=0)finishPreview()},1000)}showQ()}
 function updatePlatformTimer(){const m=String(Math.floor(platformSeconds/60)).padStart(2,"0"),sec=String(platformSeconds%60).padStart(2,"0");const el=document.getElementById("quizTimer");el.textContent=m+":"+sec;el.style.color=platformSeconds<=300?"#b42318":"#176b45"}
 
 
@@ -1070,15 +1057,15 @@ document.getElementById("premiumPrev").addEventListener("click",()=>{if(premiumI
 function finishPreview(){
  if(platformTimer){clearInterval(platformTimer);platformTimer=null}
  const answered=Object.keys(qa).length;
- const total=previewQs.length;\n const score=previewQs.reduce((sum,q,i)=>sum+(qa[i]===q.a?1:0),0);
+ const score=(previewQs.length?previewQs:activeQs.map(normalizePreviewQuestion)).reduce((sum,q,i)=>sum+(qa[i]===q.a?1:0),0);
  document.getElementById("quizResult").hidden=false;
- document.getElementById("quizResultScore").textContent=score+" / "+total;
- document.getElementById("quizResultSummary").textContent="You answered "+answered+" of "+total+" questions. "+(total-answered)+" unanswered.";
+ document.getElementById("quizResultScore").textContent=score+" / "+activeQs.length;
+ document.getElementById("quizResultSummary").textContent="You answered "+answered+" of "+activeQs.length+" questions. "+(activeQs.length-answered)+" unanswered.";
  document.getElementById("quizResultMessage").textContent=platformTestMode?(score>=48?"Strong performance. Review any incorrect and unanswered questions.":score>=36?"Good attempt. Revise the topics you missed and try again.":"Review the explanations and strengthen your C++ fundamentals before retaking the test."):score>=16?"Excellent work. Keep practising to strengthen your programming fundamentals.":score>=10?"Good attempt. Review the explanations and practise the topics you missed.":"Use the explanations to revise the fundamentals, then try the preview again.";
 }
 
 document.getElementById("quizPrev").addEventListener("click",()=>{if(qi>0){qi--;showQ()}});
-document.getElementById("quizNext").addEventListener("click",()=>{if(qi<previewQs.length-1){qi++;showQ()}else{finishPreview();document.getElementById("quizQuestion").hidden=true;document.getElementById("quizOptions").hidden=true;document.getElementById("quizFeedback").hidden=true;document.getElementById("quizPrev").hidden=true;document.getElementById("quizNext").hidden=true;document.getElementById("quizResult").hidden=false;}});
+document.getElementById("quizNext").addEventListener("click",()=>{if(qi<activeQs.length-1){qi++;showQ()}else{finishPreview();document.getElementById("quizQuestion").hidden=true;document.getElementById("quizOptions").hidden=true;document.getElementById("quizFeedback").hidden=true;document.getElementById("quizPrev").hidden=true;document.getElementById("quizNext").hidden=true;document.getElementById("quizResult").hidden=false;}});
 document.getElementById("retakePreview").addEventListener("click",()=>{document.getElementById("quizQuestion").hidden=false;document.getElementById("quizOptions").hidden=false;document.getElementById("quizPrev").hidden=false;document.getElementById("quizNext").hidden=false;startPreview()});
 
 document.getElementById("closeDialog").addEventListener("click",()=>dlg.close());
