@@ -3,16 +3,6 @@
   let examWindow = null;
   let syncHandle = null;
   let examStateObserver = null;
-  let examSyncFrame = 0;
-
-  // Batch bursts of DOM mutations into one popup refresh per animation frame.
-  function queueExamSync() {
-    if (examSyncFrame) return;
-    examSyncFrame = window.requestAnimationFrame(() => {
-      examSyncFrame = 0;
-      syncFromOriginal();
-    });
-  }
 
   function openPremiumExamWindow() {
     if (examWindow && !examWindow.closed && examWindow.document.getElementById("mockWindowContent")) {
@@ -85,11 +75,8 @@
     if (examStateObserver) examStateObserver.disconnect();
     const targets = ["premiumMockPanel", "premiumMockResult", "premiumMockTimer"].map(id => document.getElementById(id)).filter(Boolean);
     if (!targets.length || typeof MutationObserver === "undefined") return;
-    // Attribute changes are handled by the click handlers below. Watching every
-    // class/style/hidden attribute caused redundant full-panel clones while a
-    // test was running. Text and structural changes are batched once per frame.
-    examStateObserver = new MutationObserver(queueExamSync);
-    targets.forEach(target => examStateObserver.observe(target, { subtree: true, childList: true, characterData: true }));
+    examStateObserver = new MutationObserver(() => syncFromOriginal());
+    targets.forEach(target => examStateObserver.observe(target, { subtree: true, childList: true, characterData: true, attributes: true }));
   }
 
   function syncFromOriginal() {
@@ -371,7 +358,7 @@
         return;
       }
       syncMocksWindow();
-    }, 1200);
+    }, 350);
   }
 
   function preparePremiumMocksWindow() {
